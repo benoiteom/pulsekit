@@ -67,7 +67,7 @@ export async function injectPulseTracker(): Promise<void> {
   const trackerJsx = `${indent}  <PulseTracker excludePaths={["/admin/analytics"]} />\n`;
 
   content =
-    content.slice(0, bodyCloseIndex) + trackerJsx + content.slice(bodyCloseIndex);
+    content.slice(0, lineStart) + trackerJsx + content.slice(lineStart);
 
   fs.writeFileSync(foundPath, content, "utf8");
   console.log(

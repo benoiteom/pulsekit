@@ -5,7 +5,7 @@ const PACKAGES = [
   "@pulsekit/core",
   "@pulsekit/next",
   "@pulsekit/react",
-  "@supabase/supabase-js",
+  "@supabase/supabase-js@latest",
 ];
 
 export async function installPackages(pm: PackageManager): Promise<void> {
