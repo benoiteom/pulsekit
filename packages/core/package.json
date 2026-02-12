@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "main": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
-  "files": ["dist"],
+  "files": ["dist", "sql"],
   "exports": {
     ".": {
       "import": "./dist/index.mjs",
