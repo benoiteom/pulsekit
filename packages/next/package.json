@@ -1,0 +1,39 @@
+{
+  "name": "@pulsekit/next",
+  "version": "0.0.1",
+  "main": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "files": ["dist"],
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.mts"
+    },
+    "./client": {
+      "import": "./dist/client.mjs",
+      "types": "./dist/client.d.mts"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@pulsekit/core": "workspace:*",
+    "web-vitals": "^4.2.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "next": "^15.0.0",
+    "react": "^19.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.7.0"
+  },
+  "peerDependencies": {
+    "@supabase/supabase-js": ">=2.0.0",
+    "next": ">=14.0.0",
+    "react": ">=18.0.0"
+  }
+}
