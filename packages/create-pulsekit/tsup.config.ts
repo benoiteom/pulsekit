@@ -21,5 +21,4 @@ export default defineConfig({
   define: {
     "process.env.__EMBEDDED_SQL__": JSON.stringify(JSON.stringify(sqlMap)),
   },
-  external: ["postgres"],
 });

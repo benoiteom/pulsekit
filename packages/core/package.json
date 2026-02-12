@@ -1,6 +1,6 @@
 {
   "name": "@pulsekit/core",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "main": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
   "files": ["dist", "sql"],
@@ -10,16 +10,10 @@
       "types": "./dist/index.d.mts"
     }
   },
-  "bin": {
-    "pulse-init": "./dist/cli.js"
-  },
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
     "clean": "rm -rf dist"
-  },
-  "dependencies": {
-    "postgres": "^3.4.0"
   },
   "devDependencies": {
     "@supabase/supabase-js": "^2.49.0",

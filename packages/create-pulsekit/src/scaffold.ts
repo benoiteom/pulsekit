@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { getAppDir } from "./detect";
 
-export async function scaffoldFiles(siteId: string): Promise<void> {
+export function scaffoldFiles(): void {
   console.log("  Scaffolding files...\n");
 
   const appDir = getAppDir();
@@ -12,14 +12,14 @@ import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
 );
 
 export const POST = createPulseHandler({
   supabase,
   config: {
     allowLocalhost: true,
-    siteId: ${JSON.stringify(siteId)},
+    siteId: "default",
   },
 });
 `;
@@ -29,7 +29,7 @@ import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
 );
 
 export const POST = createRefreshHandler({ supabase });
@@ -41,7 +41,7 @@ import { getPulseTimezone } from "@pulsekit/next";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
 );
 
 export default async function AnalyticsPage() {
@@ -50,7 +50,7 @@ export default async function AnalyticsPage() {
   return (
     <PulseDashboard
       supabase={supabase}
-      siteId={${JSON.stringify(siteId)}}
+      siteId="default"
       timeframe="7d"
       timezone={timezone}
     />

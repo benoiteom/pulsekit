@@ -1,6 +1,6 @@
 {
   "name": "create-pulsekit",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Set up PulseKit analytics in your Next.js project",
   "bin": "./dist/index.js",
   "files": ["dist"],
@@ -8,9 +8,6 @@
     "prebuild": "cp ../core/sql/*.sql src/sql/",
     "build": "tsup",
     "clean": "rm -rf dist"
-  },
-  "dependencies": {
-    "postgres": "^3.4.0"
   },
   "devDependencies": {
     "tsup": "^8.0.0",

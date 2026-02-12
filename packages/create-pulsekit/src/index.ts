@@ -1,10 +1,8 @@
 import { detectPackageManager, validateNextJsProject } from "./detect";
-import { promptForConfig } from "./prompts";
 import { installPackages } from "./install";
-import { runMigrations } from "./migrate";
 import { scaffoldFiles } from "./scaffold";
 import { injectPulseTracker } from "./inject";
-import { writeEnvVars } from "./env";
+import { writeMigration } from "./migration";
 
 async function main() {
   console.log("\n  create-pulsekit\n");
@@ -15,23 +13,23 @@ async function main() {
 
   validateNextJsProject();
 
-  const config = await promptForConfig();
-
-  writeEnvVars(config);
-
   await installPackages(pm);
 
-  await runMigrations(config.databaseUrl);
-
-  await scaffoldFiles(config.siteId);
+  scaffoldFiles();
 
   await injectPulseTracker();
 
-  console.log("\n  Done! PulseKit analytics is ready.\n");
-  console.log("  Next steps:");
-  console.log("    1. Start your dev server");
-  console.log("    2. Visit any page to generate pageview events");
-  console.log("    3. Go to /admin/analytics to see your dashboard");
+  writeMigration();
+
+  console.log("\n  Done! PulseKit has been added to your project.\n");
+  console.log("  To finish setup:");
+  console.log("    1. Add your Supabase credentials to .env.local:");
+  console.log("       NEXT_PUBLIC_SUPABASE_URL=<your-supabase-url>");
+  console.log("       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<your-anon-key>");
+  console.log("    2. Run the database migration:");
+  console.log("       npx supabase link");
+  console.log("       npx supabase db push");
+  console.log("    3. Start your dev server and visit /admin/analytics");
 }
 
 main().catch((err) => {
