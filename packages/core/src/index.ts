@@ -1,4 +1,4 @@
-export type PulseEventType = "pageview" | "custom" | "vitals";
+export type PulseEventType = "pageview" | "custom" | "vitals" | "error" | "server_error";
 
 export interface PulseEventPayload {
   type: PulseEventType;
@@ -11,6 +11,9 @@ export interface PulseEventPayload {
 export {
   getPulseStats,
   getPulseVitals,
+  getPulseErrors,
+  getPulseAggregates,
+  dateRangeFromTimeframe,
   type Timeframe,
   type DailyStat,
   type TopPageStat,
@@ -20,4 +23,8 @@ export {
   type WebVitalStat,
   type PageVitalsStat,
   type VitalsOverview,
+  type ErrorStat,
+  type ErrorsOverview,
+  type AggregateRow,
+  type AggregatesOverview,
 } from "./queries";

@@ -1,10 +1,16 @@
 import React from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getPulseStats, getPulseVitals, type Timeframe } from "@pulsekit/core";
+import { getPulseStats, getPulseVitals, getPulseErrors, getPulseAggregates, dateRangeFromTimeframe, type Timeframe } from "@pulsekit/core";
+import { Card } from "./Card";
 import { PulseChart } from "./PulseChart";
 import { PulseMap } from "./PulseMap";
 import { PulseVitals } from "./PulseVitals";
+import { PulseErrors } from "./PulseErrors";
+import { PulseAggregates } from "./PulseAggregates";
 import { RefreshButton } from "./RefreshButton";
+import { PulseIcon } from "./PulseIcon";
+import { PulseDateRangePicker } from "./PulseDateRangePicker";
+import { KpiRow } from "./KpiRow";
 
 export interface PulseDashboardProps {
   supabase: SupabaseClient;
@@ -21,103 +27,97 @@ export async function PulseDashboard({
   timezone,
   refreshEndpoint,
 }: PulseDashboardProps) {
-  const [stats, vitals] = await Promise.all([
-    getPulseStats({ supabase, siteId, timeframe, timezone }),
-    getPulseVitals({ supabase, siteId, timeframe }).catch((err) => {
+  const [stats, vitals, errors, aggregates] = await Promise.all([
+    getPulseStats({ supabase, siteId, timeframe, timezone }).catch((err) => {
+      console.error("getPulseStats failed:", err);
+      return { daily: [], topPages: [], locations: [] };
+    }),
+    getPulseVitals({ supabase, siteId, timeframe, timezone }).catch((err) => {
       console.error("getPulseVitals failed:", err);
       return { overall: [], byPage: [] };
     }),
+    getPulseErrors({ supabase, siteId, timeframe, timezone }).catch((err) => {
+      console.error("getPulseErrors failed:", err);
+      return { errors: [], totalErrorCount: 0, totalFrontendErrors: 0, totalServerErrors: 0 };
+    }),
+    getPulseAggregates({ supabase, siteId, timeframe, timezone }).catch((err) => {
+      console.error("getPulseAggregates failed:", err);
+      return { rows: [], totalRows: 0, totalViews: 0 };
+    }),
   ]);
 
+  // Compute KPI totals from daily data
+  let totalViews = 0;
+  let uniqueVisitors = 0;
+  for (const day of stats.daily) {
+    totalViews += day.totalViews;
+    uniqueVisitors += day.uniqueVisitors;
+  }
+  const avgPerDay = stats.daily.length > 0 ? Math.round(totalViews / stats.daily.length) : 0;
+
+  const tz = timezone ?? "UTC";
+  const { startDate, endDate } = dateRangeFromTimeframe(timeframe, tz);
+
+  const hasVitals = vitals.overall.length > 0;
+  const hasLocations = stats.locations.length > 0;
+
   return (
-    <div style={{ maxWidth: 896, margin: "0 auto", padding: 24 }}>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: 24,
-        }}
-      >
-        <h1 style={{ fontSize: 24, fontWeight: 600, margin: 0 }}>Pulse Analytics</h1>
-        <RefreshButton endpoint={refreshEndpoint} />
+    <div className="max-w-5xl mx-auto p-6">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-2">
+          <PulseIcon size={24} />
+          <h1 className="text-2xl font-semibold m-0" style={{ color: "var(--pulse-fg)" }}>
+            pulsekit
+          </h1>
+        </div>
+        <div className="flex items-center gap-2">
+          <PulseDateRangePicker from={startDate} to={endDate} />
+          <RefreshButton endpoint={refreshEndpoint} />
+        </div>
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-        <section
-          style={{
-            border: "1px solid #e5e7eb",
-            borderRadius: 8,
-            overflow: "hidden",
-          }}
-        >
-          <div style={{ padding: "16px 20px", borderBottom: "1px solid #e5e7eb" }}>
-            <h2 style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>
-              Traffic over time
-            </h2>
-          </div>
-          <div style={{ padding: 20 }}>
-            {stats.daily.length === 0 ? (
-              <p style={{ fontSize: 14, color: "#6b7280", margin: 0 }}>
-                No analytics data yet. Visit your site and refresh aggregates.
-              </p>
-            ) : (
-              <PulseChart data={stats.daily} />
-            )}
-          </div>
-        </section>
+      {stats.daily.length > 0 && (
+        <div className="mb-6">
+          <KpiRow totalViews={totalViews} uniqueVisitors={uniqueVisitors} avgPerDay={avgPerDay} />
+        </div>
+      )}
 
-        <section
-          style={{
-            border: "1px solid #e5e7eb",
-            borderRadius: 8,
-            overflow: "hidden",
-          }}
-        >
-          <div style={{ padding: "16px 20px", borderBottom: "1px solid #e5e7eb" }}>
-            <h2 style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>
-              Top pages
-            </h2>
-          </div>
-          <div style={{ padding: 20 }}>
+      <div className="flex flex-col gap-6">
+        <Card title="Traffic over time">
+          {stats.daily.length === 0 ? (
+            <p className="text-sm m-0" style={{ color: "var(--pulse-fg-muted)" }}>
+              No analytics data yet. Visit your site and refresh aggregates.
+            </p>
+          ) : (
+            <PulseChart data={stats.daily} />
+          )}
+        </Card>
+
+        <div className={hasVitals ? "grid grid-cols-1 md:grid-cols-2 gap-6" : ""}>
+          <Card title="Top pages">
             {stats.topPages.length === 0 ? (
-              <p style={{ fontSize: 14, color: "#6b7280", margin: 0 }}>
+              <p className="text-sm m-0" style={{ color: "var(--pulse-fg-muted)" }}>
                 No page data available for this timeframe.
               </p>
             ) : (
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <table className="w-full border-collapse">
                 <thead>
                   <tr>
                     <th
-                      style={{
-                        textAlign: "left",
-                        padding: "8px 0",
-                        fontSize: 14,
-                        fontWeight: 500,
-                        borderBottom: "1px solid #e5e7eb",
-                      }}
+                      className="text-left py-2 text-sm font-medium"
+                      style={{ borderBottom: "1px solid var(--pulse-border)" }}
                     >
                       Path
                     </th>
                     <th
-                      style={{
-                        textAlign: "right",
-                        padding: "8px 0",
-                        fontSize: 14,
-                        fontWeight: 500,
-                        borderBottom: "1px solid #e5e7eb",
-                      }}
+                      className="text-right py-2 text-sm font-medium"
+                      style={{ borderBottom: "1px solid var(--pulse-border)" }}
                     >
                       Views
                     </th>
                     <th
-                      style={{
-                        textAlign: "right",
-                        padding: "8px 0",
-                        fontSize: 14,
-                        fontWeight: 500,
-                        borderBottom: "1px solid #e5e7eb",
-                      }}
+                      className="text-right py-2 text-sm font-medium"
+                      style={{ borderBottom: "1px solid var(--pulse-border)" }}
                     >
                       Unique
                     </th>
@@ -125,34 +125,22 @@ export async function PulseDashboard({
                 </thead>
                 <tbody>
                   {stats.topPages.map((p) => (
-                    <tr key={p.path}>
+                    <tr key={p.path} className="pulse-table-row">
                       <td
-                        style={{
-                          padding: "8px 0",
-                          fontSize: 12,
-                          fontFamily: "monospace",
-                          borderBottom: "1px solid #f3f4f6",
-                        }}
+                        className="py-2 text-xs font-mono"
+                        style={{ borderBottom: "1px solid var(--pulse-border-light)" }}
                       >
                         {p.path}
                       </td>
                       <td
-                        style={{
-                          textAlign: "right",
-                          padding: "8px 0",
-                          fontSize: 14,
-                          borderBottom: "1px solid #f3f4f6",
-                        }}
+                        className="text-right py-2 text-sm"
+                        style={{ borderBottom: "1px solid var(--pulse-border-light)" }}
                       >
                         {p.totalViews}
                       </td>
                       <td
-                        style={{
-                          textAlign: "right",
-                          padding: "8px 0",
-                          fontSize: 14,
-                          borderBottom: "1px solid #f3f4f6",
-                        }}
+                        className="text-right py-2 text-sm"
+                        style={{ borderBottom: "1px solid var(--pulse-border-light)" }}
                       >
                         {p.uniqueVisitors}
                       </td>
@@ -161,43 +149,31 @@ export async function PulseDashboard({
                 </tbody>
               </table>
             )}
-          </div>
-        </section>
-        {vitals.overall.length > 0 && (
-          <section
-            style={{
-              border: "1px solid #e5e7eb",
-              borderRadius: 8,
-              overflow: "hidden",
-            }}
-          >
-            <div style={{ padding: "16px 20px", borderBottom: "1px solid #e5e7eb" }}>
-              <h2 style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>
-                Web Vitals
-              </h2>
-            </div>
-            <div style={{ padding: 20 }}>
+          </Card>
+
+          {hasVitals && (
+            <Card title="Web Vitals">
               <PulseVitals data={vitals} />
-            </div>
-          </section>
+            </Card>
+          )}
+        </div>
+
+        {errors.totalErrorCount > 0 && (
+          <Card title="Errors">
+            <PulseErrors data={errors} />
+          </Card>
         )}
-        {stats.locations.length > 0 && (
-          <section
-            style={{
-              border: "1px solid #e5e7eb",
-              borderRadius: 8,
-              overflow: "hidden",
-            }}
-          >
-            <div style={{ padding: "16px 20px", borderBottom: "1px solid #e5e7eb" }}>
-              <h2 style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>
-                Visitors by location
-              </h2>
-            </div>
-            <div style={{ padding: 20 }}>
-              <PulseMap data={stats.locations} />
-            </div>
-          </section>
+
+        {hasLocations && (
+          <Card title="Visitors by location">
+            <PulseMap data={stats.locations} />
+          </Card>
+        )}
+
+        {aggregates.totalRows > 0 && (
+          <Card title="Consolidated data">
+            <PulseAggregates data={aggregates} />
+          </Card>
         )}
       </div>
     </div>

@@ -32,17 +32,13 @@ function countryName(code: string): string {
 
 function bubbleRadius(views: number, maxViews: number): number {
   if (maxViews === 0) return 4;
-  // Scale from 4px to 20px based on sqrt (area-proportional)
   return 4 + 16 * Math.sqrt(views / maxViews);
 }
 
 export function PulseMap({ data }: PulseMapProps): React.ReactElement {
-  // Defer map rendering to client — d3-geo projections produce slightly different
-  // floating-point results between Node.js and the browser, causing hydration mismatches.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  // Markers: only rows that have coordinates
   const { markers, maxViews } = useMemo(() => {
     const items = data.filter(
       (r): r is typeof r & { latitude: number; longitude: number } =>
@@ -55,7 +51,6 @@ export function PulseMap({ data }: PulseMapProps): React.ReactElement {
     return { markers: items, maxViews: max };
   }, [data]);
 
-  // Table rows: show city-level detail, sorted by views
   const tableRows = useMemo(() => {
     return data
       .map((row) => ({
@@ -70,7 +65,7 @@ export function PulseMap({ data }: PulseMapProps): React.ReactElement {
 
   return (
     <div>
-      <div style={{ width: "100%", height: "auto", overflow: "hidden" }}>
+      <div className="w-full overflow-hidden">
         {!mounted ? (
           <div style={{ height: 400 }} />
         ) : (
@@ -86,8 +81,8 @@ export function PulseMap({ data }: PulseMapProps): React.ReactElement {
                 <Geography
                   key={geo.rsmKey}
                   geography={geo}
-                  fill="#f0f0f0"
-                  stroke="#d1d5db"
+                  fill="var(--pulse-map-land)"
+                  stroke="var(--pulse-map-land-stroke)"
                   strokeWidth={0.5}
                   style={{
                     default: { outline: "none" },
@@ -105,8 +100,8 @@ export function PulseMap({ data }: PulseMapProps): React.ReactElement {
             >
               <circle
                 r={bubbleRadius(m.totalViews, maxViews)}
-                fill="rgba(99, 102, 241, 0.6)"
-                stroke="rgba(99, 102, 241, 0.9)"
+                fill="var(--pulse-map-marker)"
+                stroke="var(--pulse-map-marker-stroke)"
                 strokeWidth={1}
               />
             </Marker>
@@ -116,41 +111,24 @@ export function PulseMap({ data }: PulseMapProps): React.ReactElement {
       </div>
 
       {tableRows.length > 0 && (
-        <table
-          style={{ width: "100%", borderCollapse: "collapse", marginTop: 16 }}
-        >
+        <table className="w-full border-collapse mt-4">
           <thead>
             <tr>
               <th
-                style={{
-                  textAlign: "left",
-                  padding: "8px 0",
-                  fontSize: 14,
-                  fontWeight: 500,
-                  borderBottom: "1px solid #e5e7eb",
-                }}
+                className="text-left py-2 text-sm font-medium"
+                style={{ borderBottom: "1px solid var(--pulse-border)" }}
               >
                 Location
               </th>
               <th
-                style={{
-                  textAlign: "right",
-                  padding: "8px 0",
-                  fontSize: 14,
-                  fontWeight: 500,
-                  borderBottom: "1px solid #e5e7eb",
-                }}
+                className="text-right py-2 text-sm font-medium"
+                style={{ borderBottom: "1px solid var(--pulse-border)" }}
               >
                 Views
               </th>
               <th
-                style={{
-                  textAlign: "right",
-                  padding: "8px 0",
-                  fontSize: 14,
-                  fontWeight: 500,
-                  borderBottom: "1px solid #e5e7eb",
-                }}
+                className="text-right py-2 text-sm font-medium"
+                style={{ borderBottom: "1px solid var(--pulse-border)" }}
               >
                 Unique
               </th>
@@ -158,35 +136,27 @@ export function PulseMap({ data }: PulseMapProps): React.ReactElement {
           </thead>
           <tbody>
             {tableRows.map((row, i) => (
-              <tr key={`${row.country}-${row.city ?? "unknown"}-${i}`}>
+              <tr
+                key={`${row.country}-${row.city ?? "unknown"}-${i}`}
+                className="pulse-table-row"
+              >
                 <td
-                  style={{
-                    padding: "8px 0",
-                    fontSize: 14,
-                    borderBottom: "1px solid #f3f4f6",
-                  }}
+                  className="py-2 text-sm"
+                  style={{ borderBottom: "1px solid var(--pulse-border-light)" }}
                 >
                   {row.city
                     ? `${row.city}, ${row.countryName}`
                     : row.countryName}
                 </td>
                 <td
-                  style={{
-                    textAlign: "right",
-                    padding: "8px 0",
-                    fontSize: 14,
-                    borderBottom: "1px solid #f3f4f6",
-                  }}
+                  className="text-right py-2 text-sm"
+                  style={{ borderBottom: "1px solid var(--pulse-border-light)" }}
                 >
                   {row.views}
                 </td>
                 <td
-                  style={{
-                    textAlign: "right",
-                    padding: "8px 0",
-                    fontSize: 14,
-                    borderBottom: "1px solid #f3f4f6",
-                  }}
+                  className="text-right py-2 text-sm"
+                  style={{ borderBottom: "1px solid var(--pulse-border-light)" }}
                 >
                   {row.unique}
                 </td>

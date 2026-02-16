@@ -20,17 +20,52 @@ export function RefreshButton({
         setLoading(false);
         window.location.reload();
       }}
+      className="pulse-btn px-3 py-1.5 text-sm bg-transparent rounded-(--pulse-radius) z-10 transition-colors"
       style={{
-        padding: "6px 12px",
-        fontSize: "14px",
-        borderRadius: "6px",
-        border: "1px solid #d1d5db",
-        background: "transparent",
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "6px",
+        border: "1px solid var(--pulse-btn-border)",
+        color: "var(--pulse-fg)",
         cursor: loading ? "not-allowed" : "pointer",
         opacity: loading ? 0.6 : 1,
       }}
     >
-      {loading ? "Refreshing..." : "Refresh data"}
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 16 16"
+        fill="none"
+        style={{ opacity: 0.5, flexShrink: 0 }}
+      >
+        <path
+          d="M13.5 8a5.5 5.5 0 01-9.55 3.75"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
+        <path
+          d="M2.5 8a5.5 5.5 0 019.55-3.75"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
+        <path
+          d="M12.5 1.5v3h-3"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M3.5 14.5v-3h3"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+      {loading ? "Refreshing…" : "Refresh data"}
     </button>
   );
 }

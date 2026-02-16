@@ -7,5 +7,5 @@ export default defineConfig({
   clean: true,
   bundle: false,
   outExtension: () => ({ js: ".js", dts: ".d.ts" }),
-  external: ["react", "recharts", "@supabase/supabase-js", "@pulsekit/core"],
+  external: ["react", "react-day-picker", "recharts", "@supabase/supabase-js", "@pulsekit/core"],
 });

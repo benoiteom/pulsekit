@@ -2,6 +2,7 @@ import { detectPackageManager, validateNextJsProject } from "./detect";
 import { installPackages } from "./install";
 import { scaffoldFiles } from "./scaffold";
 import { injectPulseTracker } from "./inject";
+import { injectInstrumentation } from "./inject-instrumentation";
 import { writeMigration } from "./migration";
 
 async function main() {
@@ -18,6 +19,8 @@ async function main() {
   scaffoldFiles();
 
   await injectPulseTracker();
+
+  await injectInstrumentation();
 
   writeMigration();
 

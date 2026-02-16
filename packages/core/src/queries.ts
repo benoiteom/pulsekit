@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export type Timeframe = "7d" | "30d";
+export type Timeframe = "7d" | "30d" | { from: string; to: string };
 
 // ── Web Vitals types ────────────────────────────────────────────────
 
@@ -66,22 +66,22 @@ export interface PulseStats {
   locations: LocationStat[];
 }
 
-function daysFromTimeframe(timeframe: Timeframe): number {
-  return timeframe === "7d" ? 7 : 30;
-}
-
-function cutoffDate(timeframe: Timeframe, timezone: string): string {
-  const days = daysFromTimeframe(timeframe);
-  // Build cutoff in the viewer's perspective — the RPC already handles
-  // timezone-aware bucketing, but we need to trim the extra buffer day
-  // that the SQL fetches. We compute the cutoff as a plain YYYY-MM-DD
-  // string in the viewer's timezone.
+export function dateRangeFromTimeframe(
+  timeframe: Timeframe,
+  timezone: string
+): { startDate: string; endDate: string } {
+  if (typeof timeframe === "object") {
+    return { startDate: timeframe.from, endDate: timeframe.to };
+  }
+  const days = timeframe === "7d" ? 7 : 30;
   const now = new Date();
   const localNow = new Date(
     now.toLocaleString("en-US", { timeZone: timezone })
   );
+  const endDate = localNow.toISOString().slice(0, 10);
   localNow.setDate(localNow.getDate() - (days - 1));
-  return localNow.toISOString().slice(0, 10);
+  const startDate = localNow.toISOString().slice(0, 10);
+  return { startDate, endDate };
 }
 
 export async function getPulseStats(opts: {
@@ -91,15 +91,15 @@ export async function getPulseStats(opts: {
   timezone?: string;
 }): Promise<PulseStats> {
   const { supabase, siteId, timeframe, timezone = "UTC" } = opts;
-  const days = daysFromTimeframe(timeframe);
-  const since = cutoffDate(timeframe, timezone);
+  const { startDate, endDate } = dateRangeFromTimeframe(timeframe, timezone);
 
   const { data: rows, error } = await supabase
     .schema("analytics")
     .rpc("pulse_stats_by_timezone", {
       p_site_id: siteId,
       p_timezone: timezone,
-      p_days_back: days,
+      p_start_date: startDate,
+      p_end_date: endDate,
     });
 
   // Fetch location stats in parallel
@@ -107,7 +107,8 @@ export async function getPulseStats(opts: {
     .schema("analytics")
     .rpc("pulse_location_stats", {
       p_site_id: siteId,
-      p_days_back: days,
+      p_start_date: startDate,
+      p_end_date: endDate,
     });
 
   if (error) throw error;
@@ -128,11 +129,10 @@ export async function getPulseStats(opts: {
     return { daily: [], topPages: [], locations };
   }
 
-  // Group by date for daily stats (filter out the buffer day)
+  // Group by date for daily stats
   const byDate = new Map<string, { views: number; unique: number }>();
   for (const row of rows) {
     const d = String(row.date);
-    if (d < since) continue; // trim buffer day
     const existing = byDate.get(d);
     if (existing) {
       existing.views += Number(row.total_views);
@@ -153,11 +153,9 @@ export async function getPulseStats(opts: {
     })
   );
 
-  // Group by path for top pages (also respecting the date filter)
+  // Group by path for top pages
   const byPath = new Map<string, { views: number; unique: number }>();
   for (const row of rows) {
-    const d = String(row.date);
-    if (d < since) continue;
     const p = row.path;
     const existing = byPath.get(p);
     if (existing) {
@@ -183,21 +181,98 @@ export async function getPulseStats(opts: {
   return { daily, topPages, locations };
 }
 
+// ── Error types ─────────────────────────────────────────────────────
+
+export interface ErrorStat {
+  errorType: string;
+  message: string;
+  path: string;
+  totalCount: number;
+  sessionCount: number;
+  lastSeen: string;
+  firstSeen: string;
+  sampleMeta: Record<string, unknown>;
+}
+
+export interface ErrorsOverview {
+  errors: ErrorStat[];
+  totalErrorCount: number;
+  totalFrontendErrors: number;
+  totalServerErrors: number;
+}
+
+// ── Aggregates types ────────────────────────────────────────────────
+
+export interface AggregateRow {
+  date: string;
+  path: string;
+  totalViews: number;
+  uniqueVisitors: number;
+}
+
+export interface AggregatesOverview {
+  rows: AggregateRow[];
+  totalRows: number;
+  totalViews: number;
+}
+
+// ── Aggregates query ────────────────────────────────────────────────
+
+export async function getPulseAggregates(opts: {
+  supabase: SupabaseClient;
+  siteId: string;
+  timeframe: Timeframe;
+  timezone?: string;
+}): Promise<AggregatesOverview> {
+  const { supabase, siteId, timeframe, timezone = "UTC" } = opts;
+  const { startDate, endDate } = dateRangeFromTimeframe(timeframe, timezone);
+
+  const { data: rows, error } = await supabase
+    .schema("analytics")
+    .from("pulse_aggregates")
+    .select("date, path, total_views, unique_visitors")
+    .eq("site_id", siteId)
+    .gte("date", startDate)
+    .lte("date", endDate)
+    .order("date", { ascending: false })
+    .order("path");
+
+  if (error) throw error;
+
+  const mapped: AggregateRow[] = (rows ?? []).map(
+    (row: { date: string; path: string; total_views: number; unique_visitors: number }) => ({
+      date: row.date,
+      path: row.path,
+      totalViews: Number(row.total_views),
+      uniqueVisitors: Number(row.unique_visitors),
+    })
+  );
+
+  let totalViews = 0;
+  for (const r of mapped) {
+    totalViews += r.totalViews;
+  }
+
+  return { rows: mapped, totalRows: mapped.length, totalViews };
+}
+
 // ── Web Vitals query ────────────────────────────────────────────────
 
 export async function getPulseVitals(opts: {
   supabase: SupabaseClient;
   siteId: string;
   timeframe: Timeframe;
+  timezone?: string;
 }): Promise<VitalsOverview> {
-  const { supabase, siteId, timeframe } = opts;
-  const days = daysFromTimeframe(timeframe);
+  const { supabase, siteId, timeframe, timezone = "UTC" } = opts;
+  const { startDate, endDate } = dateRangeFromTimeframe(timeframe, timezone);
 
   const { data: rows, error } = await supabase
     .schema("analytics")
     .rpc("pulse_vitals_stats", {
       p_site_id: siteId,
-      p_days_back: days,
+      p_start_date: startDate,
+      p_end_date: endDate,
     });
 
   if (error) throw error;
@@ -235,4 +310,65 @@ export async function getPulseVitals(opts: {
     .slice(0, 10);
 
   return { overall, byPage };
+}
+
+// ── Error stats query ───────────────────────────────────────────────
+
+export async function getPulseErrors(opts: {
+  supabase: SupabaseClient;
+  siteId: string;
+  timeframe: Timeframe;
+  timezone?: string;
+}): Promise<ErrorsOverview> {
+  const { supabase, siteId, timeframe, timezone = "UTC" } = opts;
+  const { startDate, endDate } = dateRangeFromTimeframe(timeframe, timezone);
+
+  const { data: rows, error } = await supabase
+    .schema("analytics")
+    .rpc("pulse_error_stats", {
+      p_site_id: siteId,
+      p_start_date: startDate,
+      p_end_date: endDate,
+    });
+
+  if (error) throw error;
+
+  const errors: ErrorStat[] = (rows ?? []).map(
+    (row: {
+      error_type: string;
+      message: string;
+      path: string;
+      total_count: number;
+      session_count: number;
+      last_seen: string;
+      first_seen: string;
+      sample_meta: Record<string, unknown>;
+    }) => ({
+      errorType: row.error_type,
+      message: row.message ?? "",
+      path: row.path ?? "",
+      totalCount: Number(row.total_count),
+      sessionCount: Number(row.session_count),
+      lastSeen: row.last_seen,
+      firstSeen: row.first_seen,
+      sampleMeta: row.sample_meta ?? {},
+    })
+  );
+
+  let totalFrontendErrors = 0;
+  let totalServerErrors = 0;
+  for (const e of errors) {
+    if (e.errorType === "error") {
+      totalFrontendErrors += e.totalCount;
+    } else {
+      totalServerErrors += e.totalCount;
+    }
+  }
+
+  return {
+    errors,
+    totalErrorCount: totalFrontendErrors + totalServerErrors,
+    totalFrontendErrors,
+    totalServerErrors,
+  };
 }

@@ -1,6 +1,6 @@
 {
   "name": "@pulsekit/react",
-  "version": "0.0.3",
+  "version": "0.1.0",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -9,15 +9,18 @@
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
-    }
+    },
+    "./pulse.css": "./dist/pulse.css"
   },
   "scripts": {
     "build": "tsup",
+    "postbuild": "cp src/pulse.css dist/pulse.css",
     "dev": "tsup --watch",
     "clean": "rm -rf dist"
   },
   "dependencies": {
     "@pulsekit/core": "workspace:*",
+    "react-day-picker": "^9.0.0",
     "react-simple-maps": "^3.0.0",
     "recharts": "^2.15.0"
   },

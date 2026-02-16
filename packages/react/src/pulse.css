@@ -1,0 +1,250 @@
+:root {
+  /* Brand */
+  --pulse-brand: #7C3AED;
+  --pulse-brand-light: #8B5CF6;
+
+  /* Surfaces & text (fallback to shadcn vars) */
+  --pulse-bg: var(--card, #ffffff);
+  --pulse-fg: var(--card-foreground, #111827);
+  --pulse-fg-muted: var(--muted-foreground, #6b7280);
+  --pulse-border: var(--border, #e5e7eb);
+  --pulse-border-light: #f3f4f6;
+  --pulse-radius: var(--radius, 0.5rem);
+
+  /* Chart */
+  --pulse-chart-1: var(--chart-1, #7C3AED);
+  --pulse-chart-2: var(--chart-2, #06b6d4);
+
+  /* Map */
+  --pulse-map-land: #f0f0f0;
+  --pulse-map-land-stroke: #d1d5db;
+  --pulse-map-marker: rgba(124, 58, 237, 0.55);
+  --pulse-map-marker-stroke: rgba(124, 58, 237, 0.85);
+
+  /* Vitals rating backgrounds & text */
+  --pulse-vital-good-bg: #f0fdf4;
+  --pulse-vital-good-fg: #15803d;
+  --pulse-vital-warn-bg: #fefce8;
+  --pulse-vital-warn-fg: #a16207;
+  --pulse-vital-poor-bg: #fef2f2;
+  --pulse-vital-poor-fg: #dc2626;
+
+  /* KPI cards */
+  --pulse-kpi-bg: #faf5ff;
+
+  /* Buttons */
+  --pulse-btn-border: var(--border, #d1d5db);
+}
+
+/* Hover utilities for server components */
+.pulse-table-row:hover {
+  background-color: var(--pulse-kpi-bg);
+}
+
+.pulse-btn:hover:not(:disabled) {
+  border-color: var(--pulse-brand);
+  color: var(--pulse-brand);
+}
+
+/* ── Date Range Picker ─────────────────────────────────────────── */
+
+/* Trigger button */
+.pulse-datepicker-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  border-radius: var(--pulse-radius);
+  border: 1px solid var(--pulse-btn-border);
+  background: transparent;
+  color: var(--pulse-fg);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+/* Popover */
+.pulse-datepicker-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 50;
+  background: var(--pulse-bg);
+  border: 1px solid var(--pulse-border);
+  border-radius: var(--pulse-radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 16px;
+  min-width: 300px;
+}
+
+/* From / To field selectors */
+.pulse-datepicker-fields {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.pulse-datepicker-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  border-radius: var(--pulse-radius);
+  border: 1.5px solid var(--pulse-border);
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+
+.pulse-datepicker-field:hover {
+  border-color: var(--pulse-brand-light);
+}
+
+.pulse-datepicker-field.active {
+  border-color: var(--pulse-brand);
+  background: var(--pulse-kpi-bg);
+}
+
+.pulse-datepicker-field-label {
+  font-size: 0.675rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--pulse-fg-muted);
+}
+
+.pulse-datepicker-field.active .pulse-datepicker-field-label {
+  color: var(--pulse-brand);
+}
+
+.pulse-datepicker-field-value {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--pulse-fg);
+}
+
+/* Preset shortcuts */
+.pulse-datepicker-presets {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.pulse-datepicker-presets button {
+  flex: 1;
+  padding: 5px 8px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: var(--pulse-radius);
+  border: 1px solid var(--pulse-border);
+  background: transparent;
+  color: var(--pulse-fg-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pulse-datepicker-presets button:hover {
+  border-color: var(--pulse-brand);
+  color: var(--pulse-brand);
+  background: var(--pulse-kpi-bg);
+}
+
+/* Footer (Cancel / Apply) */
+.pulse-datepicker-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--pulse-border-light);
+}
+
+.pulse-datepicker-cancel {
+  padding: 6px 14px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border-radius: var(--pulse-radius);
+  border: 1px solid var(--pulse-border);
+  background: transparent;
+  color: var(--pulse-fg-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pulse-datepicker-cancel:hover {
+  border-color: var(--pulse-fg-muted);
+  color: var(--pulse-fg);
+}
+
+.pulse-datepicker-apply {
+  padding: 6px 14px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border-radius: var(--pulse-radius);
+  border: 1px solid var(--pulse-brand);
+  background: var(--pulse-brand);
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pulse-datepicker-apply:hover:not(:disabled) {
+  background: var(--pulse-brand-light);
+  border-color: var(--pulse-brand-light);
+}
+
+.pulse-datepicker-apply:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* react-day-picker theme overrides */
+.pulse-datepicker .rdp-root {
+  --rdp-accent-color: var(--pulse-brand);
+  --rdp-accent-background-color: var(--pulse-kpi-bg);
+  --rdp-range_start-date-background-color: var(--pulse-brand);
+  --rdp-range_start-color: #fff;
+  --rdp-range_end-date-background-color: var(--pulse-brand);
+  --rdp-range_end-color: #fff;
+  --rdp-range_middle-background-color: var(--pulse-kpi-bg);
+  --rdp-range_middle-color: var(--pulse-fg);
+  --rdp-selected-border: 2px solid var(--pulse-brand);
+  --rdp-today-color: var(--pulse-brand);
+  --rdp-day-height: 36px;
+  --rdp-day-width: 36px;
+  --rdp-day_button-height: 34px;
+  --rdp-day_button-width: 34px;
+  --rdp-day_button-border-radius: var(--pulse-radius);
+  font-size: 0.875rem;
+  color: var(--pulse-fg);
+}
+
+.pulse-datepicker .rdp-month_caption {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--pulse-fg);
+}
+
+.pulse-datepicker .rdp-weekday {
+  font-size: 0.75rem;
+  color: var(--pulse-fg-muted);
+  font-weight: 500;
+}
+
+.pulse-datepicker .rdp-chevron {
+  fill: var(--pulse-fg-muted);
+}
+
+.pulse-datepicker .rdp-day_button:hover:not([disabled]) {
+  background-color: var(--pulse-kpi-bg);
+}
+
+.pulse-datepicker .rdp-disabled {
+  opacity: 0.35;
+  cursor: default;
+}

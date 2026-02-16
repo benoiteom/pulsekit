@@ -3,7 +3,7 @@ import { PulseTracker } from "@pulsekit/next/client";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Pulse Analytics Demo",
+  title: "PulseKit Analytics Demo",
   description: "Demo app for @pulse/analytics",
 };
 

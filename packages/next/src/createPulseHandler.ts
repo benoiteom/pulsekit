@@ -3,7 +3,7 @@ import { z } from "zod";
 import type { PulseHandlerConfig } from "./types";
 
 const EventSchema = z.object({
-  type: z.enum(["pageview", "custom", "vitals"]),
+  type: z.enum(["pageview", "custom", "vitals", "error", "server_error"]),
   path: z.string().min(1),
   sessionId: z.string().optional(),
   meta: z.record(z.unknown()).optional(),

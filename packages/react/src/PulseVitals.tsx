@@ -17,10 +17,10 @@ const METRIC_LABELS: Record<string, { label: string; unit: string; description: 
 
 const METRIC_ORDER = ["lcp", "inp", "cls", "fcp", "ttfb"];
 
-const RATING_COLORS: Record<WebVitalRating, { bg: string; text: string; badge: string }> = {
-  good: { bg: "#f0fdf4", text: "#15803d", badge: "Good" },
-  "needs-improvement": { bg: "#fefce8", text: "#a16207", badge: "Needs work" },
-  poor: { bg: "#fef2f2", text: "#dc2626", badge: "Poor" },
+const RATING_STYLES: Record<WebVitalRating, { bg: string; fg: string; badge: string }> = {
+  good: { bg: "var(--pulse-vital-good-bg)", fg: "var(--pulse-vital-good-fg)", badge: "Good" },
+  "needs-improvement": { bg: "var(--pulse-vital-warn-bg)", fg: "var(--pulse-vital-warn-fg)", badge: "Needs work" },
+  poor: { bg: "var(--pulse-vital-poor-bg)", fg: "var(--pulse-vital-poor-fg)", badge: "Poor" },
 };
 
 function formatValue(metric: string, value: number): string {
@@ -29,56 +29,49 @@ function formatValue(metric: string, value: number): string {
 }
 
 function RatingBadge({ rating }: { rating: WebVitalRating }) {
-  const colors = RATING_COLORS[rating];
+  const s = RATING_STYLES[rating];
   return (
     <span
-      style={{
-        display: "inline-block",
-        padding: "2px 8px",
-        borderRadius: 9999,
-        fontSize: 11,
-        fontWeight: 600,
-        backgroundColor: colors.bg,
-        color: colors.text,
-      }}
+      className="inline-block px-2 rounded-full text-[11px] font-semibold"
+      style={{ backgroundColor: s.bg, color: s.fg, paddingTop: 2, paddingBottom: 2 }}
     >
-      {colors.badge}
+      {s.badge}
     </span>
   );
 }
 
 function VitalCard({ stat }: { stat: WebVitalStat }) {
-  const info = METRIC_LABELS[stat.metric] ?? { label: stat.metric.toUpperCase(), unit: "" };
-  const colors = RATING_COLORS[stat.rating];
+  const info = METRIC_LABELS[stat.metric] ?? { label: stat.metric.toUpperCase(), unit: "", description: "" };
+  const s = RATING_STYLES[stat.rating];
 
   return (
     <div
+      className="rounded-lg p-4 flex-1 min-w-[140px]"
       style={{
-        border: "1px solid #e5e7eb",
-        borderRadius: 8,
-        padding: 16,
-        flex: "1 1 0",
-        minWidth: 140,
-        backgroundColor: colors.bg,
+        border: "1px solid var(--pulse-border)",
+        backgroundColor: s.bg,
       }}
     >
-      <div
-        title={info.description}
-        style={{ fontSize: 12, fontWeight: 500, color: "#6b7280", marginBottom: 4, cursor: "help" }}
-      >
-        {info.label}
-      </div>
-      <div style={{ fontSize: 24, fontWeight: 700, color: colors.text }}>
-        {formatValue(stat.metric, stat.p75)}
-        {info.unit && (
-          <span style={{ fontSize: 12, fontWeight: 400, marginLeft: 2 }}>{info.unit}</span>
-        )}
-      </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
-        <RatingBadge rating={stat.rating} />
-        <span style={{ fontSize: 11, color: "#9ca3af" }}>
+      <div className="flex items-center justify-between mb-1">
+        <div
+          title={info.description}
+          className="text-xs font-medium cursor-help"
+          style={{ color: "var(--pulse-fg-muted)" }}
+        >
+          {info.label}
+        </div>
+        <span className="text-[11px]" style={{ color: "var(--pulse-fg-muted)" }}>
           {stat.sampleCount} sample{stat.sampleCount !== 1 ? "s" : ""}
         </span>
+      </div>
+      <div className="flex items-end justify-between gap-2">
+        <span className="text-2xl font-bold" style={{ color: s.fg }}>
+          {formatValue(stat.metric, stat.p75)}
+          {info.unit && (
+            <span className="text-xs font-normal ml-0.5">{info.unit}</span>
+          )}
+        </span>
+        <RatingBadge rating={stat.rating} />
       </div>
     </div>
   );
@@ -86,18 +79,17 @@ function VitalCard({ stat }: { stat: WebVitalStat }) {
 
 function CellValue({ stat }: { stat: WebVitalStat | undefined }) {
   if (!stat) {
-    return <span style={{ color: "#d1d5db" }}>--</span>;
+    return <span style={{ color: "var(--pulse-border)" }}>--</span>;
   }
-  const colors = RATING_COLORS[stat.rating];
+  const s = RATING_STYLES[stat.rating];
   return (
-    <span style={{ color: colors.text, fontWeight: 500 }}>
+    <span className="font-medium" style={{ color: s.fg }}>
       {formatValue(stat.metric, stat.p75)}
     </span>
   );
 }
 
 export function PulseVitals({ data }: PulseVitalsProps) {
-  // Build a map for quick lookup of overall stats
   const overallMap = new Map<string, WebVitalStat>();
   for (const stat of data.overall) {
     overallMap.set(stat.metric, stat);
@@ -106,7 +98,7 @@ export function PulseVitals({ data }: PulseVitalsProps) {
   return (
     <div>
       {/* Site-wide overview cards */}
-      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 20 }}>
+      <div className="flex gap-3 flex-wrap mb-5">
         {METRIC_ORDER.map((metric) => {
           const stat = overallMap.get(metric);
           if (!stat) return null;
@@ -116,30 +108,20 @@ export function PulseVitals({ data }: PulseVitalsProps) {
 
       {/* Per-page breakdown table */}
       {data.byPage.length > 0 && (
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <table className="w-full border-collapse">
           <thead>
             <tr>
               <th
-                style={{
-                  textAlign: "left",
-                  padding: "8px 0",
-                  fontSize: 14,
-                  fontWeight: 500,
-                  borderBottom: "1px solid #e5e7eb",
-                }}
+                className="text-left py-2 text-sm font-medium"
+                style={{ borderBottom: "1px solid var(--pulse-border)" }}
               >
                 Page
               </th>
               {METRIC_ORDER.map((metric) => (
                 <th
                   key={metric}
-                  style={{
-                    textAlign: "right",
-                    padding: "8px 8px",
-                    fontSize: 14,
-                    fontWeight: 500,
-                    borderBottom: "1px solid #e5e7eb",
-                  }}
+                  className="text-right py-2 px-2 text-sm font-medium"
+                  style={{ borderBottom: "1px solid var(--pulse-border)" }}
                 >
                   {METRIC_LABELS[metric]?.label ?? metric.toUpperCase()}
                 </th>
@@ -148,26 +130,18 @@ export function PulseVitals({ data }: PulseVitalsProps) {
           </thead>
           <tbody>
             {data.byPage.map((page) => (
-              <tr key={page.path}>
+              <tr key={page.path} className="pulse-table-row">
                 <td
-                  style={{
-                    padding: "8px 0",
-                    fontSize: 12,
-                    fontFamily: "monospace",
-                    borderBottom: "1px solid #f3f4f6",
-                  }}
+                  className="py-2 text-xs font-mono"
+                  style={{ borderBottom: "1px solid var(--pulse-border-light)" }}
                 >
                   {page.path}
                 </td>
                 {METRIC_ORDER.map((metric) => (
                   <td
                     key={metric}
-                    style={{
-                      textAlign: "right",
-                      padding: "8px 8px",
-                      fontSize: 14,
-                      borderBottom: "1px solid #f3f4f6",
-                    }}
+                    className="text-right py-2 px-2 text-sm"
+                    style={{ borderBottom: "1px solid var(--pulse-border-light)" }}
                   >
                     <CellValue stat={page.vitals[metric]} />
                   </td>

@@ -1,6 +1,6 @@
 {
   "name": "@pulsekit/next",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "main": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
   "files": ["dist"],
