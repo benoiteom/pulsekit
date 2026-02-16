@@ -1,15 +1,30 @@
 {
   "name": "pulse-analytics",
   "private": true,
+  "description": "Web analytics toolkit for Next.js + Supabase",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/benoiteom/pulse-analytics.git"
+  },
+  "homepage": "https://github.com/benoiteom/pulse-analytics",
+  "bugs": "https://github.com/benoiteom/pulse-analytics/issues",
+  "license": "MIT",
+  "author": "Benoit Ortalo-Magne",
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
     "lint": "turbo lint",
-    "clean": "turbo clean"
+    "clean": "turbo clean",
+    "test": "vitest run"
   },
   "devDependencies": {
+    "@next/eslint-plugin-next": "^16.1.6",
+    "eslint": "^9.39.2",
+    "eslint-plugin-react-hooks": "^7.0.1",
     "turbo": "^2.4.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "typescript-eslint": "^8.56.0",
+    "vitest": "^3.0.0"
   },
   "packageManager": "pnpm@9.15.0"
 }

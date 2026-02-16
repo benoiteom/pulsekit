@@ -26,7 +26,32 @@ pnpm dev              # Watch mode for all packages
 pnpm clean            # Remove dist/ from all packages
 ```
 
-Each package uses `tsup` for building. No test framework or linter is configured.
+Each package uses `tsup` for building.
+
+### Linting
+
+ESLint v9 (flat config) is configured at the repo root (`eslint.config.mjs`) with `typescript-eslint`, `eslint-plugin-react-hooks`, and `@next/eslint-plugin-next`.
+
+```bash
+pnpm lint             # Run ESLint across all packages (turbo)
+```
+
+## Testing
+
+Tests use **vitest** (root dev dependency). Configuration is in `vitest.config.ts` at the repo root, which globs `packages/*/src/__tests__/**/*.test.ts`.
+
+```bash
+pnpm test             # Run all tests (vitest run)
+```
+
+Test files:
+- `packages/core/src/__tests__/dateRange.test.ts` — `dateRangeFromTimeframe` pure function
+- `packages/core/src/__tests__/queries.test.ts` — `getPulseStats`, `getPulseVitals`, `getPulseErrors` data transforms and `rateVital` threshold logic
+- `packages/next/src/__tests__/handler.test.ts` — `createPulseHandler` validation, origin checking, rate limiting, DB insert
+- `packages/create-pulsekit/src/__tests__/detect.test.ts` — `detectPackageManager`, `validateNextJsProject`, `getAppDir`
+- `packages/create-pulsekit/src/__tests__/inject.test.ts` — `injectPulseTracker`, `injectInstrumentation` code injection
+
+Mocking patterns: Supabase is mocked as a chainable object (`schema → from/rpc → insert`). `node:fs` is mocked via `vi.mock` factory for CLI tests. `next/server` is mocked for handler tests.
 
 ## Key Architecture Details
 
@@ -48,3 +73,14 @@ The example app (`examples/next-supabase-demo`) is linked to a remote Supabase p
    ```
 
 The Supabase CLI is not installed globally — use `npx supabase`. The project ref is stored in `supabase/.temp/project-ref`.
+
+## Publishing to npm
+
+Packages are published manually (no changesets or release tooling). Ensure you're logged in (`npm login`) and that packages are built before publishing.
+
+```bash
+pnpm build                          # Build all packages first
+pnpm -r publish --access public     # Publish all packages recursively
+```
+
+The `--access public` flag is required for `@pulsekit/*` scoped packages. Bump versions in each `package.json` before publishing a new release.

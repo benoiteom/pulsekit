@@ -2,12 +2,26 @@
   "name": "create-pulsekit",
   "version": "0.1.0",
   "description": "Set up PulseKit analytics in your Next.js project",
+  "keywords": ["analytics", "nextjs", "supabase", "cli", "scaffolding", "pulsekit"],
+  "license": "MIT",
+  "author": "Benoit Ortalo-Magne",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/benoiteom/pulse-analytics.git",
+    "directory": "packages/create-pulsekit"
+  },
+  "homepage": "https://github.com/benoiteom/pulse-analytics/tree/main/packages/create-pulsekit",
+  "bugs": "https://github.com/benoiteom/pulse-analytics/issues",
+  "engines": {
+    "node": ">=18"
+  },
   "bin": "./dist/index.js",
   "files": ["dist"],
   "scripts": {
     "prebuild": "cp ../core/sql/*.sql src/sql/",
     "build": "tsup",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "lint": "eslint src/"
   },
   "devDependencies": {
     "tsup": "^8.0.0",

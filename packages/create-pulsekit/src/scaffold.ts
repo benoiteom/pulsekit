@@ -18,7 +18,6 @@ const supabase = createClient(
 export const POST = createPulseHandler({
   supabase,
   config: {
-    allowLocalhost: true,
     siteId: "default",
   },
 });

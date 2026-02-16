@@ -1,6 +1,20 @@
 {
   "name": "@pulsekit/next",
   "version": "0.1.0",
+  "description": "Next.js API route handlers and client-side tracker for PulseKit",
+  "keywords": ["analytics", "nextjs", "supabase", "web-vitals", "tracker", "pulsekit"],
+  "license": "MIT",
+  "author": "Benoit Ortalo-Magne",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/benoiteom/pulse-analytics.git",
+    "directory": "packages/next"
+  },
+  "homepage": "https://github.com/benoiteom/pulse-analytics/tree/main/packages/next",
+  "bugs": "https://github.com/benoiteom/pulse-analytics/issues",
+  "engines": {
+    "node": ">=18"
+  },
   "main": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
   "files": ["dist"],
@@ -17,7 +31,8 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "lint": "eslint src/"
   },
   "dependencies": {
     "@pulsekit/core": "workspace:*",
