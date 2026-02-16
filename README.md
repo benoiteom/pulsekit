@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/benoiteom/pulse-analytics/main/assets/logo.svg" alt="PulseKit" width="200" />
+  <img src="./assets/logo.svg" alt="PulseKit" width="200" />
 </p>
 
 <p align="center">

@@ -11,7 +11,7 @@
   "license": "MIT",
   "author": "Benoit Ortalo-Magne",
   "scripts": {
-    "build": "turbo build",
+    "build": "turbo build --filter='!./examples/*'",
     "dev": "turbo dev",
     "lint": "turbo lint",
     "clean": "turbo clean",
