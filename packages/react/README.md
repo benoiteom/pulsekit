@@ -1,10 +1,10 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/benoiteom/pulse-analytics/main/assets/logo.svg" alt="PulseKit" width="200" />
+  <img src="https://raw.githubusercontent.com/benoiteom/pulsekit/main/assets/logo.svg" alt="PulseKit" width="200" />
 </p>
 
 # @pulsekit/react
 
-React Server Components for the [PulseKit](https://github.com/benoiteom/pulse-analytics) analytics dashboard.
+React Server Components for the [PulseKit](https://github.com/benoiteom/pulsekit) analytics dashboard.
 
 ## Installation
 

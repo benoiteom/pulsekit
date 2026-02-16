@@ -6,8 +6,8 @@ Thanks for your interest in contributing to PulseKit! This guide will help you g
 
 1. **Fork and clone** the repository:
    ```bash
-   git clone https://github.com/<your-username>/pulse-analytics.git
-   cd pulse-analytics
+   git clone https://github.com/<your-username>/pulsekit.git
+   cd pulsekit
    ```
 
 2. **Install dependencies** (requires [pnpm](https://pnpm.io/) v9+):

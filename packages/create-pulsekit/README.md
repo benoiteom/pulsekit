@@ -1,10 +1,10 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/benoiteom/pulse-analytics/main/assets/logo.svg" alt="PulseKit" width="200" />
+  <img src="https://raw.githubusercontent.com/benoiteom/pulsekit/main/assets/logo.svg" alt="PulseKit" width="200" />
 </p>
 
 # create-pulsekit
 
-CLI scaffolding tool for setting up [PulseKit](https://github.com/benoiteom/pulse-analytics) analytics in a Next.js project.
+CLI scaffolding tool for setting up [PulseKit](https://github.com/benoiteom/pulsekit) analytics in a Next.js project.
 
 ## Usage
 

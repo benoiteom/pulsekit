@@ -7,11 +7,11 @@
   "author": "Benoit Ortalo-Magne",
   "repository": {
     "type": "git",
-    "url": "https://github.com/benoiteom/pulse-analytics.git",
+    "url": "https://github.com/benoiteom/pulsekit.git",
     "directory": "packages/react"
   },
-  "homepage": "https://github.com/benoiteom/pulse-analytics/tree/main/packages/react",
-  "bugs": "https://github.com/benoiteom/pulse-analytics/issues",
+  "homepage": "https://github.com/benoiteom/pulsekit/tree/main/packages/react",
+  "bugs": "https://github.com/benoiteom/pulsekit/issues",
   "engines": {
     "node": ">=18"
   },

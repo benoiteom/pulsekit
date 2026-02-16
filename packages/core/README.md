@@ -1,10 +1,10 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/benoiteom/pulse-analytics/main/assets/logo.svg" alt="PulseKit" width="200" />
+  <img src="https://raw.githubusercontent.com/benoiteom/pulsekit/main/assets/logo.svg" alt="PulseKit" width="200" />
 </p>
 
 # @pulsekit/core
 
-Core analytics queries, types, and SQL migrations for [PulseKit](https://github.com/benoiteom/pulse-analytics).
+Core analytics queries, types, and SQL migrations for [PulseKit](https://github.com/benoiteom/pulsekit).
 
 ## Installation
 

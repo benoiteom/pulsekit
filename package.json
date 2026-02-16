@@ -1,13 +1,13 @@
 {
-  "name": "pulse-analytics",
+  "name": "pulsekit",
   "private": true,
   "description": "Web analytics toolkit for Next.js + Supabase",
   "repository": {
     "type": "git",
-    "url": "https://github.com/benoiteom/pulse-analytics.git"
+    "url": "https://github.com/benoiteom/pulsekit.git"
   },
-  "homepage": "https://github.com/benoiteom/pulse-analytics",
-  "bugs": "https://github.com/benoiteom/pulse-analytics/issues",
+  "homepage": "https://github.com/benoiteom/pulsekit",
+  "bugs": "https://github.com/benoiteom/pulsekit/issues",
   "license": "MIT",
   "author": "Benoit Ortalo-Magne",
   "scripts": {
