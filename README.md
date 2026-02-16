@@ -8,7 +8,7 @@
 
 <p align="center">
   <a href="https://www.npmjs.com/package/@pulsekit/core"><img src="https://img.shields.io/npm/v/@pulsekit/core.svg" alt="npm version" /></a>
-  <a href="https://github.com/benoiteom/pulse-analytics/blob/main/LICENSE"><img src="https://img.shields.io/npm/@pulsekit/core.svg" alt="license" /></a>
+  <a href="https://github.com/benoiteom/pulse-analytics/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/@pulsekit/core.svg" alt="license" /></a>
   <a href="https://github.com/benoiteom/pulse-analytics/actions/workflows/ci.yml"><img src="https://github.com/benoiteom/pulse-analytics/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
 </p>
 
