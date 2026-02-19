@@ -34,7 +34,7 @@ dashboard page, set up error reporting, and write the Supabase migration. After 
 2. Push the database migration:
    npx supabase link && npx supabase db push
 
-3. If the project has middleware that protects routes, allow /api/pulse and /admin/analytics through.
+3. If the project has middleware that protects routes, allow /api/pulse and /admin/analytics through (often found in lib/supabase/proxy.ts for a Next.js + Supabase project).
 ```
 
 ## Table of Contents
