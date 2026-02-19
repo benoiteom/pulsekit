@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@source "../node_modules/@pulsekit/react/dist";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@pulsekit/react/pulse.css";

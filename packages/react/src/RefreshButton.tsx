@@ -20,13 +20,8 @@ export function RefreshButton({
         setLoading(false);
         window.location.reload();
       }}
-      className="pulse-btn px-3 py-1.5 text-sm bg-transparent rounded-(--pulse-radius) z-10 transition-colors"
+      className="pulse-btn pulse-datepicker-trigger"
       style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "6px",
-        border: "1px solid var(--pulse-btn-border)",
-        color: "var(--pulse-fg)",
         cursor: loading ? "not-allowed" : "pointer",
         opacity: loading ? 0.6 : 1,
       }}
@@ -65,7 +60,7 @@ export function RefreshButton({
           strokeLinejoin="round"
         />
       </svg>
-      {loading ? "Refreshing…" : "Refresh data"}
+      {loading ? "Refreshing\u2026" : "Refresh data"}
     </button>
   );
 }

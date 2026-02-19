@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { verifyPulseToken } from "@pulsekit/core";
-import { PulseLoginForm } from "./PulseLoginForm";
+import { PulseLoginForm } from "./PulseLoginForm.js";
 
 export interface PulseAuthGateProps {
   children: React.ReactNode;

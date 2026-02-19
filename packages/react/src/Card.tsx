@@ -7,25 +7,11 @@ interface CardProps {
 
 export function Card({ title, children }: CardProps) {
   return (
-    <section
-      className="rounded-lg overflow-hidden shadow-sm"
-      style={{
-        border: "1px solid var(--pulse-border)",
-        backgroundColor: "var(--pulse-bg)",
-      }}
-    >
-      <div
-        className="px-5 py-4"
-        style={{ borderBottom: "1px solid var(--pulse-border)" }}
-      >
-        <h2
-          className="text-base font-semibold m-0"
-          style={{ color: "var(--pulse-fg)" }}
-        >
-          {title}
-        </h2>
+    <section className="pulse-card">
+      <div className="pulse-card-header">
+        <h2 className="pulse-card-title">{title}</h2>
       </div>
-      <div className="p-5">{children}</div>
+      <div className="pulse-card-body">{children}</div>
     </section>
   );
 }

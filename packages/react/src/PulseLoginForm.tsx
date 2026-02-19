@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { PulseIcon } from "./PulseIcon";
+import { PulseIcon } from "./PulseIcon.js";
 
 export interface PulseLoginFormProps {
   /** Auth endpoint URL. Defaults to "/api/pulse/auth". */

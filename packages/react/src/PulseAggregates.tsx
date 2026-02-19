@@ -11,16 +11,9 @@ export interface PulseAggregatesProps {
 
 function KpiChip({ label, value }: { label: string; value: number }) {
   return (
-    <div
-      className="rounded-lg px-4 py-3 flex-1 min-w-[120px]"
-      style={{ border: "1px solid var(--pulse-border)" }}
-    >
-      <div className="text-xs font-medium" style={{ color: "var(--pulse-fg-muted)" }}>
-        {label}
-      </div>
-      <div className="text-2xl font-bold" style={{ color: "var(--pulse-fg)" }}>
-        {value}
-      </div>
+    <div className="pulse-chip">
+      <div className="pulse-chip-label">{label}</div>
+      <div className="pulse-chip-value">{value}</div>
     </div>
   );
 }
@@ -33,101 +26,49 @@ export function PulseAggregates({ data }: PulseAggregatesProps) {
 
   return (
     <div>
-      <div className="flex gap-3 flex-wrap mb-5">
+      <div className="pulse-chip-row">
         <KpiChip label="Consolidated rows" value={data.totalRows} />
         <KpiChip label="Total views" value={data.totalViews} />
       </div>
 
-      <table className="w-full border-collapse">
+      <table className="pulse-table">
         <thead>
           <tr>
-            <th
-              className="text-left py-2 text-sm font-medium"
-              style={{ borderBottom: "1px solid var(--pulse-border)" }}
-            >
-              Date
-            </th>
-            <th
-              className="text-left py-2 text-sm font-medium"
-              style={{ borderBottom: "1px solid var(--pulse-border)" }}
-            >
-              Path
-            </th>
-            <th
-              className="text-right py-2 text-sm font-medium"
-              style={{ borderBottom: "1px solid var(--pulse-border)" }}
-            >
-              Views
-            </th>
-            <th
-              className="text-right py-2 text-sm font-medium"
-              style={{ borderBottom: "1px solid var(--pulse-border)" }}
-            >
-              Unique
-            </th>
+            <th className="pulse-th">Date</th>
+            <th className="pulse-th">Path</th>
+            <th className="pulse-th pulse-th--right">Views</th>
+            <th className="pulse-th pulse-th--right">Unique</th>
           </tr>
         </thead>
         <tbody>
           {pageRows.map((row, i) => (
             <tr key={`${row.date}-${row.path}-${i}`} className="pulse-table-row">
-              <td
-                className="py-2 text-sm"
-                style={{ borderBottom: "1px solid var(--pulse-border-light)" }}
-              >
-                {row.date}
-              </td>
-              <td
-                className="py-2 text-xs font-mono"
-                style={{ borderBottom: "1px solid var(--pulse-border-light)" }}
-              >
-                {row.path}
-              </td>
-              <td
-                className="text-right py-2 text-sm"
-                style={{ borderBottom: "1px solid var(--pulse-border-light)" }}
-              >
-                {row.totalViews}
-              </td>
-              <td
-                className="text-right py-2 text-sm"
-                style={{ borderBottom: "1px solid var(--pulse-border-light)" }}
-              >
-                {row.uniqueVisitors}
-              </td>
+              <td className="pulse-td">{row.date}</td>
+              <td className="pulse-td pulse-td--mono">{row.path}</td>
+              <td className="pulse-td pulse-td--right">{row.totalViews}</td>
+              <td className="pulse-td pulse-td--right">{row.uniqueVisitors}</td>
             </tr>
           ))}
         </tbody>
       </table>
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-between mt-3">
-          <span className="text-xs" style={{ color: "var(--pulse-fg-muted)" }}>
+        <div className="pulse-pagination">
+          <span className="pulse-pagination-info">
             {page * PAGE_SIZE + 1}&ndash;{Math.min((page + 1) * PAGE_SIZE, data.rows.length)} of {data.rows.length} rows
           </span>
-          <div className="flex gap-2">
+          <div className="pulse-pagination-buttons">
             <button
               onClick={() => setPage(page - 1)}
               disabled={page === 0}
-              className="px-3 py-1 text-xs rounded"
-              style={{
-                border: "1px solid var(--pulse-border)",
-                color: page === 0 ? "var(--pulse-border)" : "var(--pulse-fg)",
-                background: "transparent",
-                cursor: page === 0 ? "default" : "pointer",
-              }}
+              className="pulse-pagination-btn"
             >
               Prev
             </button>
             <button
               onClick={() => setPage(page + 1)}
               disabled={page >= totalPages - 1}
-              className="px-3 py-1 text-xs rounded"
-              style={{
-                border: "1px solid var(--pulse-border)",
-                color: page >= totalPages - 1 ? "var(--pulse-border)" : "var(--pulse-fg)",
-                background: "transparent",
-                cursor: page >= totalPages - 1 ? "default" : "pointer",
-              }}
+              className="pulse-pagination-btn"
             >
               Next
             </button>

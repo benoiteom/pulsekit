@@ -66,7 +66,7 @@ export function PulseMap({ data }: PulseMapProps): React.ReactElement {
 
   return (
     <div>
-      <div className="w-full overflow-hidden">
+      <div className="pulse-map-container">
         {!mounted ? (
           <div style={{ height: 400 }} />
         ) : (
@@ -112,27 +112,12 @@ export function PulseMap({ data }: PulseMapProps): React.ReactElement {
       </div>
 
       {tableRows.length > 0 && (
-        <table className="w-full border-collapse mt-4">
+        <table className="pulse-map-table">
           <thead>
             <tr>
-              <th
-                className="text-left py-2 text-sm font-medium"
-                style={{ borderBottom: "1px solid var(--pulse-border)" }}
-              >
-                Location
-              </th>
-              <th
-                className="text-right py-2 text-sm font-medium"
-                style={{ borderBottom: "1px solid var(--pulse-border)" }}
-              >
-                Views
-              </th>
-              <th
-                className="text-right py-2 text-sm font-medium"
-                style={{ borderBottom: "1px solid var(--pulse-border)" }}
-              >
-                Unique
-              </th>
+              <th className="pulse-th">Location</th>
+              <th className="pulse-th pulse-th--right">Views</th>
+              <th className="pulse-th pulse-th--right">Unique</th>
             </tr>
           </thead>
           <tbody>
@@ -141,26 +126,13 @@ export function PulseMap({ data }: PulseMapProps): React.ReactElement {
                 key={`${row.country}-${row.city ?? "unknown"}-${i}`}
                 className="pulse-table-row"
               >
-                <td
-                  className="py-2 text-sm"
-                  style={{ borderBottom: "1px solid var(--pulse-border-light)" }}
-                >
+                <td className="pulse-td">
                   {row.city
                     ? `${row.city}, ${row.countryName}`
                     : row.countryName}
                 </td>
-                <td
-                  className="text-right py-2 text-sm"
-                  style={{ borderBottom: "1px solid var(--pulse-border-light)" }}
-                >
-                  {row.views}
-                </td>
-                <td
-                  className="text-right py-2 text-sm"
-                  style={{ borderBottom: "1px solid var(--pulse-border-light)" }}
-                >
-                  {row.unique}
-                </td>
+                <td className="pulse-td pulse-td--right">{row.views}</td>
+                <td className="pulse-td pulse-td--right">{row.unique}</td>
               </tr>
             ))}
           </tbody>

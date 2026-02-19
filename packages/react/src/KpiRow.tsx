@@ -15,13 +15,11 @@ function formatNumber(n: number): string {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div
-      className="rounded-lg px-4 py-3"
-      style={{ backgroundColor: "var(--pulse-kpi-bg)", border: "1px solid var(--pulse-border)" }}
+      className="pulse-chip"
+      style={{ backgroundColor: "var(--pulse-kpi-bg)" }}
     >
-      <div className="text-xs font-medium" style={{ color: "var(--pulse-fg-muted)" }}>
-        {label}
-      </div>
-      <div className="text-2xl font-bold" style={{ color: "var(--pulse-brand)" }}>
+      <div className="pulse-chip-label">{label}</div>
+      <div className="pulse-chip-value" style={{ color: "var(--pulse-brand)" }}>
         {value}
       </div>
     </div>
@@ -30,7 +28,7 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 export function KpiRow({ totalViews, uniqueVisitors, avgPerDay }: KpiRowProps) {
   return (
-    <div className="grid grid-cols-3 gap-4">
+    <div className="pulse-kpi-row">
       <Stat label="Total Views" value={formatNumber(totalViews)} />
       <Stat label="Unique Visitors" value={formatNumber(uniqueVisitors)} />
       <Stat label="Avg / Day" value={formatNumber(avgPerDay)} />

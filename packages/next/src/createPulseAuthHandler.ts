@@ -22,19 +22,22 @@ const SEVEN_DAYS = 7 * 24 * 60 * 60;
  * export const DELETE = handler;
  * ```
  */
-export function createPulseAuthHandler({
-  secret,
-  cookieMaxAge = SEVEN_DAYS,
-}: PulseAuthHandlerConfig) {
-  if (!secret || secret.length < 16) {
-    throw new Error(
-      "[pulsekit] createPulseAuthHandler requires a secret of at least 16 characters. Set the PULSE_SECRET environment variable.",
-    );
-  }
-
-  const isLoginRateLimited = createRateLimiter(5, 60_000);
+export function createPulseAuthHandler(config: PulseAuthHandlerConfig) {
+  let isLoginRateLimited: ReturnType<typeof createRateLimiter> | undefined;
 
   return async function handler(req: NextRequest) {
+    const secret = config.secret;
+    const cookieMaxAge = config.cookieMaxAge ?? SEVEN_DAYS;
+
+    if (!secret || secret.length < 16) {
+      throw new Error(
+        "[pulsekit] createPulseAuthHandler requires a secret of at least 16 characters. Set the PULSE_SECRET environment variable.",
+      );
+    }
+
+    if (!isLoginRateLimited) {
+      isLoginRateLimited = createRateLimiter(5, 60_000);
+    }
     if (req.method === "DELETE") {
       const resp = NextResponse.json({ ok: true });
       resp.cookies.set("pulse_auth", "", {

@@ -86,18 +86,20 @@ The ingestion route receives events from the tracker:
 import { createPulseHandler } from "@pulsekit/next";
 import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
-);
+export const POST = (req: Request) => {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+  );
 
-export const POST = createPulseHandler({
-  supabase,
-  config: {
-    siteId: "my-site",
-    secret: process.env.PULSE_SECRET,
-  },
-});
+  return createPulseHandler({
+    supabase,
+    config: {
+      siteId: "my-site",
+      secret: process.env.PULSE_SECRET,
+    },
+  })(req);
+};
 ```
 
 The auth route handles dashboard login/logout (see [Authentication](#authentication)):
@@ -121,12 +123,13 @@ The refresh-aggregates and consolidate routes power the [data lifecycle](#data-l
 import { createRefreshHandler, withPulseAuth } from "@pulsekit/next";
 import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
-export const POST = withPulseAuth(createRefreshHandler({ supabase }));
+export const POST = withPulseAuth((req: Request) => {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+  return createRefreshHandler({ supabase })(req);
+});
 ```
 
 ```ts
@@ -134,12 +137,13 @@ export const POST = withPulseAuth(createRefreshHandler({ supabase }));
 import { createConsolidateHandler, withPulseAuth } from "@pulsekit/next";
 import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
-export const POST = withPulseAuth(createConsolidateHandler({ supabase }));
+export const POST = withPulseAuth((req: Request) => {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+  return createConsolidateHandler({ supabase })(req);
+});
 ```
 
 ### 2. Add the tracker to your layout
@@ -174,22 +178,37 @@ export default async function RootLayout({ children }) {
 
 ```tsx
 // app/admin/analytics/page.tsx
-import { PulseDashboard, PulseAuthGate } from "@pulsekit/react";
-import { getPulseTimezone } from "@pulsekit/next";
-import { createClient } from "@supabase/supabase-js";
+import { Suspense } from "react";
 import "@pulsekit/react/pulse.css";
-import type { Timeframe } from "@pulsekit/core";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
-export default async function AnalyticsPage({
+export default function AnalyticsPage({
   searchParams,
 }: {
   searchParams: Promise<{ from?: string; to?: string }>;
 }) {
+  return (
+    <Suspense fallback={<div>Loading dashboard...</div>}>
+      <Dashboard searchParams={searchParams} />
+    </Suspense>
+  );
+}
+
+// Separate async component — renders dynamically
+import { PulseDashboard, PulseAuthGate } from "@pulsekit/react";
+import { getPulseTimezone } from "@pulsekit/next";
+import { createClient } from "@supabase/supabase-js";
+import type { Timeframe } from "@pulsekit/core";
+
+async function Dashboard({
+  searchParams,
+}: {
+  searchParams: Promise<{ from?: string; to?: string }>;
+}) {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
   const { from, to } = await searchParams;
   const timeframe: Timeframe = from && to ? { from, to } : "7d";
   const timezone = await getPulseTimezone();
@@ -264,12 +283,18 @@ Use `createPulseErrorReporter` in your Next.js [instrumentation file](https://ne
 import { createPulseErrorReporter } from "@pulsekit/next";
 import { createClient } from "@supabase/supabase-js";
 
-export const onRequestError = createPulseErrorReporter({
-  supabase: createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  ),
-});
+let reporter: ReturnType<typeof createPulseErrorReporter> | undefined;
+
+export const onRequestError: typeof import("next").onRequestError = (...args) => {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) return;
+  reporter ??= createPulseErrorReporter({
+    supabase: createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    ),
+  });
+  return reporter(...args);
+};
 ```
 
 The error reporter captures the error message, stack trace, HTTP method, route path, and route type. It will never throw — errors during reporting are silently caught so they don't break your app.
@@ -332,10 +357,10 @@ Override any of these on `:root` or a parent element to customize the dashboard 
 
 | Variable | Default | Description |
 | --- | --- | --- |
-| `--pulse-bg` | `var(--card, #ffffff)` | Card/surface background |
-| `--pulse-fg` | `var(--card-foreground, #111827)` | Primary text color |
-| `--pulse-fg-muted` | `var(--muted-foreground, #6b7280)` | Secondary/muted text |
-| `--pulse-border` | `var(--border, #e5e7eb)` | Border color |
+| `--pulse-bg` | `hsl(var(--card, 0 0% 100%))` | Card/surface background |
+| `--pulse-fg` | `hsl(var(--card-foreground, 0 0% 3.9%))` | Primary text color |
+| `--pulse-fg-muted` | `hsl(var(--muted-foreground, 0 0% 45.1%))` | Secondary/muted text |
+| `--pulse-border` | `hsl(var(--border, 0 0% 89.8%))` | Border color |
 | `--pulse-border-light` | `#f3f4f6` | Lighter border (table rows) |
 | `--pulse-radius` | `var(--radius, 0.5rem)` | Border radius |
 
@@ -343,8 +368,8 @@ Override any of these on `:root` or a parent element to customize the dashboard 
 
 | Variable | Default | Description |
 | --- | --- | --- |
-| `--pulse-chart-1` | `var(--chart-1, #7C3AED)` | Primary chart color (views) |
-| `--pulse-chart-2` | `var(--chart-2, #06b6d4)` | Secondary chart color (unique visitors) |
+| `--pulse-chart-1` | `hsl(var(--chart-1, 262 83% 58%))` | Primary chart color (views) |
+| `--pulse-chart-2` | `hsl(var(--chart-2, 187 86% 53%))` | Secondary chart color (unique visitors) |
 
 **Map**
 
@@ -371,7 +396,7 @@ Override any of these on `:root` or a parent element to customize the dashboard 
 | Variable | Default | Description |
 | --- | --- | --- |
 | `--pulse-kpi-bg` | `#faf5ff` | KPI card background |
-| `--pulse-btn-border` | `var(--border, #d1d5db)` | Button border |
+| `--pulse-btn-border` | `hsl(var(--border, 0 0% 89.8%))` | Button border |
 
 ### Example: dark theme override
 

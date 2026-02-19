@@ -1,16 +1,16 @@
 import React from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getPulseStats, getPulseVitals, getPulseErrors, getPulseAggregates, dateRangeFromTimeframe, type Timeframe } from "@pulsekit/core";
-import { Card } from "./Card";
-import { PulseChart } from "./PulseChart";
-import { PulseMap } from "./PulseMap";
-import { PulseVitals } from "./PulseVitals";
-import { PulseErrors } from "./PulseErrors";
-import { PulseAggregates } from "./PulseAggregates";
-import { RefreshButton } from "./RefreshButton";
-import { PulseIcon } from "./PulseIcon";
-import { PulseDateRangePicker } from "./PulseDateRangePicker";
-import { KpiRow } from "./KpiRow";
+import { Card } from "./Card.js";
+import { PulseChart } from "./PulseChart.js";
+import { PulseMap } from "./PulseMap.js";
+import { PulseVitals } from "./PulseVitals.js";
+import { PulseErrors } from "./PulseErrors.js";
+import { PulseAggregates } from "./PulseAggregates.js";
+import { RefreshButton } from "./RefreshButton.js";
+import { PulseIcon } from "./PulseIcon.js";
+import { PulseDateRangePicker } from "./PulseDateRangePicker.js";
+import { KpiRow } from "./KpiRow.js";
 
 export interface PulseDashboardProps {
   supabase: SupabaseClient;
@@ -65,30 +65,28 @@ export async function PulseDashboard({
   const hasLocations = stats.locations.length > 0;
 
   return (
-    <div className="max-w-5xl mx-auto p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2">
+    <div className="pulse-dashboard">
+      <div className="pulse-dashboard-header">
+        <div className="pulse-dashboard-logo">
           <PulseIcon size={24} />
-          <h1 className="text-2xl font-semibold m-0" style={{ color: "var(--pulse-fg)" }}>
-            pulsekit
-          </h1>
+          <h1 className="pulse-heading">pulsekit</h1>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="pulse-dashboard-actions">
           <PulseDateRangePicker from={startDate} to={endDate} />
           <RefreshButton endpoint={refreshEndpoint} />
         </div>
       </div>
 
       {stats.daily.length > 0 && (
-        <div className="mb-6">
+        <div className="pulse-dashboard-kpis">
           <KpiRow totalViews={totalViews} uniqueVisitors={uniqueVisitors} avgPerDay={avgPerDay} />
         </div>
       )}
 
-      <div className="flex flex-col gap-6">
+      <div className="pulse-dashboard-sections">
         <Card title="Traffic over time">
           {stats.daily.length === 0 ? (
-            <p className="text-sm m-0" style={{ color: "var(--pulse-fg-muted)" }}>
+            <p className="pulse-text-empty">
               No analytics data yet. Visit your site and refresh aggregates.
             </p>
           ) : (
@@ -96,57 +94,27 @@ export async function PulseDashboard({
           )}
         </Card>
 
-        <div className={hasVitals ? "grid grid-cols-1 md:grid-cols-2 gap-6" : ""}>
+        <div className={hasVitals ? "pulse-dashboard-grid" : ""}>
           <Card title="Top pages">
             {stats.topPages.length === 0 ? (
-              <p className="text-sm m-0" style={{ color: "var(--pulse-fg-muted)" }}>
+              <p className="pulse-text-empty">
                 No page data available for this timeframe.
               </p>
             ) : (
-              <table className="w-full border-collapse">
+              <table className="pulse-table">
                 <thead>
                   <tr>
-                    <th
-                      className="text-left py-2 text-sm font-medium"
-                      style={{ borderBottom: "1px solid var(--pulse-border)" }}
-                    >
-                      Path
-                    </th>
-                    <th
-                      className="text-right py-2 text-sm font-medium"
-                      style={{ borderBottom: "1px solid var(--pulse-border)" }}
-                    >
-                      Views
-                    </th>
-                    <th
-                      className="text-right py-2 text-sm font-medium"
-                      style={{ borderBottom: "1px solid var(--pulse-border)" }}
-                    >
-                      Unique
-                    </th>
+                    <th className="pulse-th">Path</th>
+                    <th className="pulse-th pulse-th--right">Views</th>
+                    <th className="pulse-th pulse-th--right">Unique</th>
                   </tr>
                 </thead>
                 <tbody>
                   {stats.topPages.map((p) => (
                     <tr key={p.path} className="pulse-table-row">
-                      <td
-                        className="py-2 text-xs font-mono"
-                        style={{ borderBottom: "1px solid var(--pulse-border-light)" }}
-                      >
-                        {p.path}
-                      </td>
-                      <td
-                        className="text-right py-2 text-sm"
-                        style={{ borderBottom: "1px solid var(--pulse-border-light)" }}
-                      >
-                        {p.totalViews}
-                      </td>
-                      <td
-                        className="text-right py-2 text-sm"
-                        style={{ borderBottom: "1px solid var(--pulse-border-light)" }}
-                      >
-                        {p.uniqueVisitors}
-                      </td>
+                      <td className="pulse-td pulse-td--mono">{p.path}</td>
+                      <td className="pulse-td pulse-td--right">{p.totalViews}</td>
+                      <td className="pulse-td pulse-td--right">{p.uniqueVisitors}</td>
                     </tr>
                   ))}
                 </tbody>

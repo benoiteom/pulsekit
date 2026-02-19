@@ -3,17 +3,17 @@
   --pulse-brand: #7C3AED;
   --pulse-brand-light: #8B5CF6;
 
-  /* Surfaces & text (fallback to shadcn vars) */
-  --pulse-bg: var(--card, #ffffff);
-  --pulse-fg: var(--card-foreground, #111827);
-  --pulse-fg-muted: var(--muted-foreground, #6b7280);
-  --pulse-border: var(--border, #e5e7eb);
+  /* Surfaces & text (fallback to shadcn/Tailwind theme vars) */
+  --pulse-bg: var(--card, hsl(0 0% 100%));
+  --pulse-fg: var(--card-foreground, hsl(0 0% 3.9%));
+  --pulse-fg-muted: var(--muted-foreground, hsl(0 0% 45.1%));
+  --pulse-border: var(--border, hsl(0 0% 89.8%));
   --pulse-border-light: #f3f4f6;
   --pulse-radius: var(--radius, 0.5rem);
 
   /* Chart */
-  --pulse-chart-1: var(--chart-1, #7C3AED);
-  --pulse-chart-2: var(--chart-2, #06b6d4);
+  --pulse-chart-1: var(--chart-1, hsl(262 83% 58%));
+  --pulse-chart-2: var(--chart-2, hsl(187 86% 53%));
 
   /* Map */
   --pulse-map-land: #f0f0f0;
@@ -33,7 +33,7 @@
   --pulse-kpi-bg: #faf5ff;
 
   /* Buttons */
-  --pulse-btn-border: var(--border, #d1d5db);
+  --pulse-btn-border: var(--border, hsl(0 0% 89.8%));
 }
 
 /* Hover utilities for server components */
@@ -247,4 +247,290 @@
 .pulse-datepicker .rdp-disabled {
   opacity: 0.35;
   cursor: default;
+}
+
+/* ── Layout (PulseDashboard) ─────────────────────────────────────── */
+
+.pulse-dashboard {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.pulse-dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.pulse-dashboard-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pulse-dashboard-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pulse-dashboard-kpis {
+  margin-bottom: 1.5rem;
+}
+
+.pulse-dashboard-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.pulse-dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .pulse-dashboard-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ── Card ────────────────────────────────────────────────────────── */
+
+.pulse-card {
+  border-radius: var(--pulse-radius);
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--pulse-border);
+  background-color: var(--pulse-bg);
+}
+
+.pulse-card-header {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--pulse-border);
+}
+
+.pulse-card-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--pulse-fg);
+}
+
+.pulse-card-body {
+  padding: 1.25rem;
+}
+
+/* ── KPI chips ───────────────────────────────────────────────────── */
+
+.pulse-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.pulse-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.pulse-chip {
+  border-radius: var(--pulse-radius);
+  padding: 0.75rem 1rem;
+  flex: 1;
+  min-width: 120px;
+  border: 1px solid var(--pulse-border);
+}
+
+.pulse-chip-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--pulse-fg-muted);
+}
+
+.pulse-chip-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--pulse-fg);
+}
+
+/* ── Vital cards ─────────────────────────────────────────────────── */
+
+.pulse-vital-card {
+  border-radius: var(--pulse-radius);
+  padding: 1rem;
+  flex: 1;
+  min-width: 140px;
+  border: 1px solid var(--pulse-border);
+}
+
+.pulse-vital-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+}
+
+.pulse-vital-card-metric {
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: help;
+  color: var(--pulse-fg-muted);
+}
+
+.pulse-vital-card-samples {
+  font-size: 11px;
+  color: var(--pulse-fg-muted);
+}
+
+.pulse-vital-card-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.pulse-vital-card-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.pulse-vital-card-unit {
+  font-size: 0.75rem;
+  font-weight: 400;
+  margin-left: 0.125rem;
+}
+
+/* ── Badge ───────────────────────────────────────────────────────── */
+
+.pulse-badge {
+  display: inline-block;
+  padding: 2px 0.5rem;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* ── Table ───────────────────────────────────────────────────────── */
+
+.pulse-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.pulse-th {
+  text-align: left;
+  padding: 0.5rem 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-bottom: 1px solid var(--pulse-border);
+}
+
+.pulse-th--right {
+  text-align: right;
+}
+
+.pulse-th--padded {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+.pulse-td {
+  padding: 0.5rem 0;
+  font-size: 0.875rem;
+  border-bottom: 1px solid var(--pulse-border-light);
+}
+
+.pulse-td--right {
+  text-align: right;
+}
+
+.pulse-td--padded {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+.pulse-td--mono {
+  font-size: 0.75rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.pulse-td--truncate {
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pulse-td--nowrap {
+  white-space: nowrap;
+}
+
+/* ── Pagination ──────────────────────────────────────────────────── */
+
+.pulse-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.75rem;
+}
+
+.pulse-pagination-info {
+  font-size: 0.75rem;
+  color: var(--pulse-fg-muted);
+}
+
+.pulse-pagination-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.pulse-pagination-btn {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  border-radius: var(--pulse-radius);
+  border: 1px solid var(--pulse-border);
+  background: transparent;
+  color: var(--pulse-fg);
+  cursor: pointer;
+}
+
+.pulse-pagination-btn:disabled {
+  color: var(--pulse-border);
+  cursor: default;
+}
+
+/* ── Other ───────────────────────────────────────────────────────── */
+
+.pulse-heading {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--pulse-fg);
+}
+
+.pulse-text-empty {
+  font-size: 0.875rem;
+  margin: 0;
+  color: var(--pulse-fg-muted);
+}
+
+.pulse-map-container {
+  width: 100%;
+  overflow: hidden;
+}
+
+.pulse-map-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.pulse-font-medium {
+  font-weight: 500;
 }
