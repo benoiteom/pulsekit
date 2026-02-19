@@ -1,6 +1,6 @@
 {
   "name": "@pulsekit/core",
-  "version": "0.1.1",
+  "version": "1.0.0",
   "description": "Core analytics queries, types, and SQL migrations for PulseKit",
   "keywords": ["analytics", "supabase", "nextjs", "web-vitals", "pulsekit"],
   "license": "MIT",
