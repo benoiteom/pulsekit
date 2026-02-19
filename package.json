@@ -1,6 +1,7 @@
 {
   "name": "pulsekit",
   "private": true,
+  "type": "module",
   "description": "Web analytics toolkit for Next.js + Supabase",
   "repository": {
     "type": "git",
