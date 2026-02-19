@@ -16,8 +16,30 @@
 
 PulseKit gives you a self-hosted analytics dashboard inside your Next.js app, backed by Supabase. Track page views, Web Vitals, errors, and visitor geography — no third-party scripts, no external services.
 
+## AI-Assisted Installation
+
+Copy and paste this prompt into your AI coding assistant to install PulseKit:
+
+```
+Run `npx create-pulsekit` to install PulseKit web analytics into this Next.js + Supabase project.
+It will install packages, scaffold API routes, inject the tracker into the layout, create the
+dashboard page, set up error reporting, and write the Supabase migration. After it finishes:
+
+1. Add these environment variables to .env.local (ask me for the values if needed):
+   NEXT_PUBLIC_SUPABASE_URL=
+   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+   SUPABASE_SERVICE_ROLE_KEY=
+   PULSE_SECRET=          # minimum 16 characters
+
+2. Push the database migration:
+   npx supabase link && npx supabase db push
+
+3. If the project has middleware that protects routes, allow /api/pulse and /admin/analytics through.
+```
+
 ## Table of Contents
 
+- [AI-Assisted Installation](#ai-assisted-installation)
 - [Quick Start](#quick-start)
 - [Packages](#packages)
 - [Manual Installation](#manual-installation)
