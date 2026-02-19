@@ -13,7 +13,7 @@
   "homepage": "https://github.com/benoiteom/pulsekit/tree/main/packages/create-pulsekit",
   "bugs": "https://github.com/benoiteom/pulsekit/issues",
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "main": "./dist/index.js",
   "bin": "./dist/index.js",
