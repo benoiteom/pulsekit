@@ -28,14 +28,16 @@ export async function injectPulseTracker(): Promise<void> {
 
   let content = fs.readFileSync(foundPath, "utf8");
 
-  if (content.includes("PulseTracker")) {
+  if (content.includes("PulseTrackerWrapper") || content.includes("PulseTracker")) {
     console.log("    PulseTracker already present in layout. Skipping.\n");
     return;
   }
 
-  // Add import after the last existing import
-  const importStatement =
-    'import { PulseTracker } from "@pulsekit/next/client";';
+  // Add imports after the last existing import
+  const importStatements = [
+    'import { Suspense } from "react";',
+    'import PulseTrackerWrapper from "@/components/pulse-tracker-wrapper";',
+  ];
 
   const importRegex = /^import\s.+$/gm;
   let lastImportEnd = -1;
@@ -44,17 +46,23 @@ export async function injectPulseTracker(): Promise<void> {
     lastImportEnd = match.index + match[0].length;
   }
 
-  if (lastImportEnd === -1) {
-    content = importStatement + "\n" + content;
-  } else {
-    content =
-      content.slice(0, lastImportEnd) +
-      "\n" +
-      importStatement +
-      content.slice(lastImportEnd);
+  // Only add imports that aren't already present
+  const newImports = importStatements.filter((stmt) => !content.includes(stmt));
+  const importBlock = newImports.join("\n");
+
+  if (importBlock) {
+    if (lastImportEnd === -1) {
+      content = importBlock + "\n" + content;
+    } else {
+      content =
+        content.slice(0, lastImportEnd) +
+        "\n" +
+        importBlock +
+        content.slice(lastImportEnd);
+    }
   }
 
-  // Inject <PulseTracker /> before </body>
+  // Inject <Suspense><PulseTrackerWrapper /></Suspense> before </body>
   const bodyCloseIndex = content.lastIndexOf("</body>");
   if (bodyCloseIndex === -1) {
     printManualInstructions();
@@ -64,7 +72,11 @@ export async function injectPulseTracker(): Promise<void> {
   // Detect indentation from the </body> line
   const lineStart = content.lastIndexOf("\n", bodyCloseIndex) + 1;
   const indent = content.slice(lineStart, bodyCloseIndex).match(/^\s*/)?.[0] ?? "        ";
-  const trackerJsx = `${indent}  <PulseTracker excludePaths={["/admin/analytics"]} />\n`;
+  const trackerJsx = [
+    `${indent}  <Suspense>`,
+    `${indent}    <PulseTrackerWrapper />`,
+    `${indent}  </Suspense>`,
+  ].join("\n") + "\n";
 
   content =
     content.slice(0, lineStart) + trackerJsx + content.slice(lineStart);
@@ -79,10 +91,11 @@ function printManualInstructions(): void {
   console.log(
     "    Could not auto-inject PulseTracker. Add it manually to your layout:\n"
   );
-  console.log('    import { PulseTracker } from "@pulsekit/next/client";');
+  console.log('    import { Suspense } from "react";');
+  console.log('    import PulseTrackerWrapper from "@/components/pulse-tracker-wrapper";');
   console.log("");
   console.log("    // Add inside your <body> tag:");
-  console.log(
-    '    <PulseTracker excludePaths={["/admin/analytics"]} />\n'
-  );
+  console.log("    <Suspense>");
+  console.log("      <PulseTrackerWrapper />");
+  console.log("    </Suspense>\n");
 }

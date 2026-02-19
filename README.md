@@ -85,8 +85,9 @@ The ingestion route receives events from the tracker:
 // app/api/pulse/route.ts
 import { createPulseHandler } from "@pulsekit/next";
 import { createClient } from "@supabase/supabase-js";
+import type { NextRequest } from "next/server";
 
-export const POST = (req: Request) => {
+export const POST = (req: NextRequest) => {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
@@ -123,12 +124,12 @@ The refresh-aggregates and consolidate routes power the [data lifecycle](#data-l
 import { createRefreshHandler, withPulseAuth } from "@pulsekit/next";
 import { createClient } from "@supabase/supabase-js";
 
-export const POST = withPulseAuth((req: Request) => {
+export const POST = withPulseAuth(() => {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
-  return createRefreshHandler({ supabase })(req);
+  return createRefreshHandler({ supabase })();
 });
 ```
 
@@ -137,35 +138,51 @@ export const POST = withPulseAuth((req: Request) => {
 import { createConsolidateHandler, withPulseAuth } from "@pulsekit/next";
 import { createClient } from "@supabase/supabase-js";
 
-export const POST = withPulseAuth((req: Request) => {
+export const POST = withPulseAuth(() => {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
-  return createConsolidateHandler({ supabase })(req);
+  return createConsolidateHandler({ supabase })();
 });
 ```
 
 ### 2. Add the tracker to your layout
 
 ```tsx
-// app/layout.tsx
+// components/pulse-tracker-wrapper.tsx
 import { PulseTracker } from "@pulsekit/next/client";
 import { createPulseIngestionToken } from "@pulsekit/next";
+import { connection } from "next/server";
 
-export default async function RootLayout({ children }) {
+export default async function PulseTrackerWrapper() {
+  await connection();
   const token = process.env.PULSE_SECRET
     ? await createPulseIngestionToken(process.env.PULSE_SECRET)
     : undefined;
 
   return (
+    <PulseTracker
+      excludePaths={["/admin/analytics"]}
+      token={token}
+    />
+  );
+}
+```
+
+```tsx
+// app/layout.tsx
+import { Suspense } from "react";
+import PulseTrackerWrapper from "@/components/pulse-tracker-wrapper";
+
+export default function RootLayout({ children }) {
+  return (
     <html>
       <body>
         {children}
-        <PulseTracker
-          excludePaths={["/admin/analytics"]}
-          token={token}
-        />
+        <Suspense>
+          <PulseTrackerWrapper />
+        </Suspense>
       </body>
     </html>
   );
@@ -285,7 +302,9 @@ import { createClient } from "@supabase/supabase-js";
 
 let reporter: ReturnType<typeof createPulseErrorReporter> | undefined;
 
-export const onRequestError: typeof import("next").onRequestError = (...args) => {
+export const onRequestError = (
+  ...args: Parameters<ReturnType<typeof createPulseErrorReporter>>
+) => {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL) return;
   reporter ??= createPulseErrorReporter({
     supabase: createClient(
@@ -528,7 +547,7 @@ React Server Component that protects the dashboard with password auth.
 | Dependency | Tested Versions |
 | --- | --- |
 | Node.js | 18, 20, 22 |
-| Next.js | 14.x, 15.x |
+| Next.js | 14.x, 15.x, 16.x |
 | React | 18.x, 19.x |
 | Supabase JS | 2.x |
 

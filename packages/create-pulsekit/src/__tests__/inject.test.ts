@@ -47,7 +47,7 @@ describe("injectPulseTracker", () => {
     "}",
   ].join("\n");
 
-  it("adds import after last import and JSX before </body>", async () => {
+  it("adds imports after last import and JSX before </body>", async () => {
     vi.mocked(fs.existsSync).mockImplementation(
       (p) => String(p) === "/fake/src/app/layout.tsx"
     );
@@ -58,24 +58,25 @@ describe("injectPulseTracker", () => {
     expect(fs.writeFileSync).toHaveBeenCalledOnce();
     const written = vi.mocked(fs.writeFileSync).mock.calls[0][1] as string;
 
-    // Import added after the last original import
-    expect(written).toContain(
-      'import "./globals.css";\nimport { PulseTracker } from "@pulsekit/next/client";'
-    );
+    // Imports added after the last original import
+    expect(written).toContain('import { Suspense } from "react";');
+    expect(written).toContain('import PulseTrackerWrapper from "@/components/pulse-tracker-wrapper";');
 
-    // PulseTracker JSX appears before </body>
-    const trackerIdx = written.indexOf("<PulseTracker");
+    // Suspense-wrapped PulseTrackerWrapper appears before </body>
+    const trackerIdx = written.indexOf("<PulseTrackerWrapper");
     const bodyIdx = written.indexOf("</body>");
     expect(trackerIdx).toBeGreaterThan(-1);
     expect(trackerIdx).toBeLessThan(bodyIdx);
+    expect(written).toContain("<Suspense>");
+    expect(written).toContain("</Suspense>");
   });
 
-  it("skips when PulseTracker is already present", async () => {
+  it("skips when PulseTrackerWrapper is already present", async () => {
     vi.mocked(fs.existsSync).mockImplementation(
       (p) => String(p) === "/fake/src/app/layout.tsx"
     );
     vi.mocked(fs.readFileSync).mockReturnValue(
-      layout.replace('import "./globals.css";', 'import { PulseTracker } from "@pulsekit/next/client";') as any
+      layout.replace('import "./globals.css";', 'import PulseTrackerWrapper from "@/components/pulse-tracker-wrapper";') as any
     );
 
     await injectPulseTracker();
@@ -115,7 +116,7 @@ describe("injectPulseTracker", () => {
     await injectPulseTracker();
 
     const written = vi.mocked(fs.writeFileSync).mock.calls[0][1] as string;
-    expect(written).toMatch(/^import \{ PulseTracker \}/);
+    expect(written).toMatch(/^import \{ Suspense \}/);
   });
 });
 

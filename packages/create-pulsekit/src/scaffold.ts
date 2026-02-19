@@ -90,6 +90,25 @@ export default function AnalyticsPage() {
 }
 `;
 
+  const trackerWrapper = `import { PulseTracker } from "@pulsekit/next/client";
+import { createPulseIngestionToken } from "@pulsekit/next";
+import { connection } from "next/server";
+
+export default async function PulseTrackerWrapper() {
+  await connection();
+  const token = process.env.PULSE_SECRET
+    ? await createPulseIngestionToken(process.env.PULSE_SECRET)
+    : undefined;
+
+  return (
+    <PulseTracker
+      excludePaths={["/admin/analytics"]}
+      token={token}
+    />
+  );
+}
+`;
+
   // Scaffold the spinner component if not already present
   const spinnerContent = `import { LoaderIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -120,6 +139,19 @@ export { Spinner }
   } else {
     fs.writeFileSync(spinnerPath, spinnerContent, "utf8");
     console.log("    Created: components/ui/spinner.tsx");
+  }
+
+  // Scaffold the tracker wrapper component
+  const componentsDir = appDir.includes(path.join("src", "app"))
+    ? path.join(cwd, "src", "components")
+    : path.join(cwd, "components");
+  const wrapperPath = path.join(componentsDir, "pulse-tracker-wrapper.tsx");
+  fs.mkdirSync(componentsDir, { recursive: true });
+  if (fs.existsSync(wrapperPath)) {
+    console.log("    Skipped (already exists): components/pulse-tracker-wrapper.tsx");
+  } else {
+    fs.writeFileSync(wrapperPath, trackerWrapper, "utf8");
+    console.log("    Created: components/pulse-tracker-wrapper.tsx");
   }
 
   const files = [
