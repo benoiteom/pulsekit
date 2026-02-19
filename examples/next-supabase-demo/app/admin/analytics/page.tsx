@@ -32,10 +32,10 @@ export default async function AnalyticsPage({
   const timeframe: Timeframe = from && to ? { from, to } : "7d";
 
   return (
-    <PulseAuthGate secret={process.env.PULSE_SECRET}>
-      <Suspense fallback={<div className="flex items-center justify-center p-6"><Spinner className="size-6" /></div>}>
+    <Suspense fallback={<div className="flex items-center justify-center p-6"><Spinner className="size-6" /></div>}>
+      <PulseAuthGate secret={process.env.PULSE_SECRET!}>
         <Dashboard timeframe={timeframe} />
-      </Suspense>
-    </PulseAuthGate>
+      </PulseAuthGate>
+    </Suspense>
   );
 }

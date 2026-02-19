@@ -81,11 +81,11 @@ async function Dashboard() {
 
 export default function AnalyticsPage() {
   return (
-    <PulseAuthGate secret={process.env.PULSE_SECRET}>
-      <Suspense fallback={<div className="flex items-center justify-center min-h-screen p-6"><Spinner className="size-6" /></div>}>
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen p-6"><Spinner className="size-6" /></div>}>
+      <PulseAuthGate secret={process.env.PULSE_SECRET}>
         <Dashboard />
-      </Suspense>
-    </PulseAuthGate>
+      </PulseAuthGate>
+    </Suspense>
   );
 }
 `;

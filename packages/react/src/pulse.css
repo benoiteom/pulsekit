@@ -4,16 +4,16 @@
   --pulse-brand-light: #8B5CF6;
 
   /* Surfaces & text (fallback to shadcn/Tailwind theme vars) */
-  --pulse-bg: var(--card, hsl(0 0% 100%));
-  --pulse-fg: var(--card-foreground, hsl(0 0% 3.9%));
-  --pulse-fg-muted: var(--muted-foreground, hsl(0 0% 45.1%));
-  --pulse-border: var(--border, hsl(0 0% 89.8%));
+  --pulse-bg: hsl(var(--card, 0 0% 100%));
+  --pulse-fg: hsl(var(--card-foreground, 0 0% 3.9%));
+  --pulse-fg-muted: hsl(var(--muted-foreground, 0 0% 45.1%));
+  --pulse-border: hsl(var(--border, 0 0% 89.8%));
   --pulse-border-light: #f3f4f6;
   --pulse-radius: var(--radius, 0.5rem);
 
   /* Chart */
-  --pulse-chart-1: var(--chart-1, hsl(262 83% 58%));
-  --pulse-chart-2: var(--chart-2, hsl(187 86% 53%));
+  --pulse-chart-1: hsl(var(--chart-1, 262 83% 58%));
+  --pulse-chart-2: hsl(var(--chart-2, 187 86% 53%));
 
   /* Map */
   --pulse-map-land: #f0f0f0;
@@ -33,7 +33,7 @@
   --pulse-kpi-bg: #faf5ff;
 
   /* Buttons */
-  --pulse-btn-border: var(--border, hsl(0 0% 89.8%));
+  --pulse-btn-border: hsl(var(--border, 0 0% 89.8%));
 }
 
 /* Hover utilities for server components */
