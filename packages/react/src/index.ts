@@ -8,3 +8,5 @@ export { RefreshButton, type RefreshButtonProps } from "./RefreshButton";
 export { PulseIcon, type PulseIconProps } from "./PulseIcon";
 export { KpiRow, type KpiRowProps } from "./KpiRow";
 export { PulseDateRangePicker, type PulseDateRangePickerProps } from "./PulseDateRangePicker";
+export { PulseAuthGate, type PulseAuthGateProps } from "./PulseAuthGate";
+export { PulseLoginForm, type PulseLoginFormProps } from "./PulseLoginForm";

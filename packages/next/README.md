@@ -82,6 +82,17 @@ export default function RootLayout({ children }) {
 }
 ```
 
+#### Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `endpoint` | `string` | `"/api/pulse"` | The API route that receives tracking events. |
+| `excludePaths` | `string[]` | — | Paths where tracking is skipped (e.g. `["/admin"]`). |
+| `captureErrors` | `boolean` | `true` | Capture `window.onerror` and unhandled rejections. |
+| `errorLimit` | `number` | `10` | Max unique errors to report per page. |
+| `token` | `string` | — | Signed ingestion token for authenticated event collection. |
+| `onError` | `(error: unknown) => void` | — | Called when a tracking request fails. By default failures are silent so analytics never break your app. Pass this to surface issues during development or log them in production. |
+
 ## License
 
 MIT

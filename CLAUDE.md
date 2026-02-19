@@ -84,3 +84,7 @@ pnpm -r publish --access public     # Publish all packages recursively
 ```
 
 The `--access public` flag is required for `@pulsekit/*` scoped packages. Bump versions in each `package.json` before publishing a new release.
+
+## Changelog
+
+When making a change worth noting (bug fix, new feature, breaking change, performance improvement), add an entry to `CHANGELOG.md` under the `## Unreleased` section. Use Keep a Changelog format with categories: Added, Changed, Fixed, Removed. Update the version number in the corresponding package.json accordingly.

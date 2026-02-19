@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { createPulseToken } from "@pulsekit/core";
 
 vi.mock("next/server", () => {
   class NextResponse {
@@ -233,6 +234,13 @@ describe("createPulseHandler", () => {
       );
       expect(resp.status).toBe(400);
     });
+
+    it("empty sessionId", async () => {
+      const resp: any = await handler(
+        makeReq({ body: { type: "pageview", path: "/", sessionId: "" } })
+      );
+      expect(resp.status).toBe(400);
+    });
   });
 
   it("returns 200 and inserts event on valid payload", async () => {
@@ -288,8 +296,6 @@ describe("createPulseHandler", () => {
   });
 
   it("returns 500 when Supabase insert fails", async () => {
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-
     const { client } = mockSupabase({
       error: { message: "DB error", code: "500" },
     });
@@ -299,7 +305,186 @@ describe("createPulseHandler", () => {
 
     expect(resp.status).toBe(500);
     expect(resp.body).toEqual({ error: "Failed to log event" });
+  });
 
-    consoleSpy.mockRestore();
+  it("calls onError when Supabase insert fails", async () => {
+    const onError = vi.fn();
+    const dbError = { message: "DB error", code: "500" };
+    const { client } = mockSupabase({ error: dbError });
+    const handler = createPulseHandler({
+      supabase: client as any,
+      config: { onError },
+    });
+
+    const resp: any = await handler(makeReq({ body: validBody }));
+
+    expect(resp.status).toBe(500);
+    expect(onError).toHaveBeenCalledOnce();
+    expect(onError).toHaveBeenCalledWith(dbError);
+  });
+
+  it("skips insert for ignored paths", async () => {
+    const { client, insert } = mockSupabase();
+    const handler = createPulseHandler({
+      supabase: client as any,
+      config: { ignorePaths: ["/healthz", "/api/internal"] },
+    });
+
+    const resp: any = await handler(
+      makeReq({ body: { type: "pageview", path: "/healthz" } })
+    );
+    expect(resp.status).toBe(200);
+    expect(resp.body).toEqual({ ok: true });
+    expect(insert).not.toHaveBeenCalled();
+  });
+
+  it("still inserts for non-ignored paths when ignorePaths is set", async () => {
+    const { client, insert } = mockSupabase();
+    const handler = createPulseHandler({
+      supabase: client as any,
+      config: { ignorePaths: ["/healthz"] },
+    });
+
+    const resp: any = await handler(makeReq({ body: validBody }));
+    expect(resp.status).toBe(200);
+    expect(insert).toHaveBeenCalledOnce();
+  });
+
+  describe("ingestion token validation", () => {
+    const SECRET = "ingestion-test-secret";
+
+    it("returns 403 when secret is set but no token provided", async () => {
+      const { client } = mockSupabase();
+      const handler = createPulseHandler({
+        supabase: client as any,
+        config: { secret: SECRET },
+      });
+
+      const resp: any = await handler(makeReq({ body: validBody }));
+      expect(resp.status).toBe(403);
+      expect(resp.body).toEqual({ error: "Forbidden" });
+    });
+
+    it("returns 403 when token is invalid", async () => {
+      const { client } = mockSupabase();
+      const handler = createPulseHandler({
+        supabase: client as any,
+        config: { secret: SECRET },
+      });
+
+      const resp: any = await handler(
+        makeReq({
+          headers: { "x-pulse-token": "bad.token" },
+          body: validBody,
+        }),
+      );
+      expect(resp.status).toBe(403);
+    });
+
+    it("passes through when token is valid", async () => {
+      const { client } = mockSupabase();
+      const handler = createPulseHandler({
+        supabase: client as any,
+        config: { secret: SECRET },
+      });
+
+      const token = await createPulseToken(SECRET, 60_000);
+      const resp: any = await handler(
+        makeReq({
+          headers: { "x-pulse-token": token },
+          body: validBody,
+        }),
+      );
+      expect(resp.status).toBe(200);
+    });
+
+    it("skips token validation when secret is not configured", async () => {
+      const { client } = mockSupabase();
+      const handler = createPulseHandler({
+        supabase: client as any,
+      });
+
+      const resp: any = await handler(makeReq({ body: validBody }));
+      expect(resp.status).toBe(200);
+    });
+  });
+
+  describe("CORS headers on error responses", () => {
+    const ORIGIN = "http://app.example.com";
+    const makeOriginReq = (overrides: Parameters<typeof makeReq>[0]) =>
+      makeReq({ ...overrides, headers: { origin: ORIGIN, ...overrides.headers } });
+
+    function handlerWithCors() {
+      const { client, insert } = mockSupabase();
+      const handler = createPulseHandler({
+        supabase: client as any,
+        config: { allowedOrigins: [ORIGIN] },
+      });
+      return { handler, insert };
+    }
+
+    it("sets CORS on 400 (invalid JSON)", async () => {
+      const { handler } = handlerWithCors();
+      const resp: any = await handler(makeOriginReq({ jsonError: true }));
+      expect(resp.status).toBe(400);
+      expect(resp.headers.get("Access-Control-Allow-Origin")).toBe(ORIGIN);
+    });
+
+    it("sets CORS on 400 (invalid payload)", async () => {
+      const { handler } = handlerWithCors();
+      const resp: any = await handler(makeOriginReq({ body: { bad: true } }));
+      expect(resp.status).toBe(400);
+      expect(resp.headers.get("Access-Control-Allow-Origin")).toBe(ORIGIN);
+    });
+
+    it("sets CORS on 429 (rate limited)", async () => {
+      const { client } = mockSupabase();
+      const ip = "10.88.88.88";
+      const handler = createPulseHandler({
+        supabase: client as any,
+        config: { allowedOrigins: [ORIGIN], rateLimit: 1 },
+      });
+
+      // Exhaust the limit
+      await handler(makeReq({ headers: { origin: ORIGIN, "x-forwarded-for": ip }, body: validBody }));
+      const resp: any = await handler(
+        makeReq({ headers: { origin: ORIGIN, "x-forwarded-for": ip }, body: validBody })
+      );
+      expect(resp.status).toBe(429);
+      expect(resp.headers.get("Access-Control-Allow-Origin")).toBe(ORIGIN);
+    });
+
+    it("sets CORS on 500 (DB error)", async () => {
+      const { client } = mockSupabase({ error: { message: "fail" } });
+      const handler = createPulseHandler({
+        supabase: client as any,
+        config: { allowedOrigins: [ORIGIN] },
+      });
+
+      const resp: any = await handler(makeOriginReq({ body: validBody }));
+      expect(resp.status).toBe(500);
+      expect(resp.headers.get("Access-Control-Allow-Origin")).toBe(ORIGIN);
+    });
+
+    it("sets CORS on 200 (success)", async () => {
+      const { handler } = handlerWithCors();
+      const resp: any = await handler(makeOriginReq({ body: validBody }));
+      expect(resp.status).toBe(200);
+      expect(resp.headers.get("Access-Control-Allow-Origin")).toBe(ORIGIN);
+    });
+
+    it("does NOT set CORS on 403 (forbidden origin)", async () => {
+      const { client } = mockSupabase();
+      const handler = createPulseHandler({
+        supabase: client as any,
+        config: { allowedOrigins: ["http://other.com"] },
+      });
+
+      const resp: any = await handler(
+        makeReq({ headers: { origin: "http://evil.com" }, body: validBody })
+      );
+      expect(resp.status).toBe(403);
+      expect(resp.headers.get("Access-Control-Allow-Origin")).toBeUndefined();
+    });
   });
 });

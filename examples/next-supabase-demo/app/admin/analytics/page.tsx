@@ -1,13 +1,13 @@
 import { Suspense } from "react";
 import { createClient } from "@supabase/supabase-js";
-import { PulseDashboard } from "@pulsekit/react";
+import { PulseDashboard, PulseAuthGate } from "@pulsekit/react";
 import { getPulseTimezone } from "@pulsekit/next";
 import { Spinner } from "@/components/ui/spinner";
 import type { Timeframe } from "@pulsekit/core";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
 );
 
 async function Dashboard({ timeframe }: { timeframe: Timeframe }) {
@@ -32,8 +32,10 @@ export default async function AnalyticsPage({
   const timeframe: Timeframe = from && to ? { from, to } : "7d";
 
   return (
-    <Suspense fallback={<div className="flex items-center justify-center p-6"><Spinner className="size-6" /></div>}>
-      <Dashboard timeframe={timeframe} />
-    </Suspense>
+    <PulseAuthGate secret={process.env.PULSE_SECRET}>
+      <Suspense fallback={<div className="flex items-center justify-center p-6"><Spinner className="size-6" /></div>}>
+        <Dashboard timeframe={timeframe} />
+      </Suspense>
+    </PulseAuthGate>
   );
 }

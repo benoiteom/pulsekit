@@ -1,3 +1,5 @@
+export { createPulseToken, verifyPulseToken, timingSafeEqual } from "./auth";
+
 export type PulseEventType = "pageview" | "custom" | "vitals" | "error" | "server_error";
 
 export interface PulseEventPayload {

@@ -19,11 +19,12 @@ export const POST = createPulseHandler({
   supabase,
   config: {
     siteId: "default",
+    secret: process.env.PULSE_SECRET,
   },
 });
 `;
 
-  const refreshRoute = `import { createRefreshHandler } from "@pulsekit/next";
+  const refreshRoute = `import { createRefreshHandler, withPulseAuth } from "@pulsekit/next";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -31,10 +32,10 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
 );
 
-export const POST = createRefreshHandler({ supabase });
+export const POST = withPulseAuth(createRefreshHandler({ supabase }));
 `;
 
-  const consolidateRoute = `import { createConsolidateHandler } from "@pulsekit/next";
+  const consolidateRoute = `import { createConsolidateHandler, withPulseAuth } from "@pulsekit/next";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -42,12 +43,20 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
 );
 
-export const POST = createConsolidateHandler({ supabase });
+export const POST = withPulseAuth(createConsolidateHandler({ supabase }));
+`;
+
+  const authRoute = `import { createPulseAuthHandler } from "@pulsekit/next";
+
+const handler = createPulseAuthHandler({ secret: process.env.PULSE_SECRET! });
+
+export const POST = handler;
+export const DELETE = handler;
 `;
 
   const dashboardPage = `import { Suspense } from "react";
 import { createClient } from "@supabase/supabase-js";
-import { PulseDashboard } from "@pulsekit/react";
+import { PulseDashboard, PulseAuthGate } from "@pulsekit/react";
 import { getPulseTimezone } from "@pulsekit/next";
 import { Spinner } from "@/components/ui/spinner";
 import "@pulsekit/react/pulse.css";
@@ -72,9 +81,11 @@ async function Dashboard() {
 
 export default function AnalyticsPage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center min-h-screen p-6"><Spinner className="size-6" /></div>}>
-      <Dashboard />
-    </Suspense>
+    <PulseAuthGate secret={process.env.PULSE_SECRET}>
+      <Suspense fallback={<div className="flex items-center justify-center min-h-screen p-6"><Spinner className="size-6" /></div>}>
+        <Dashboard />
+      </Suspense>
+    </PulseAuthGate>
   );
 }
 `;
@@ -113,6 +124,7 @@ export { Spinner }
 
   const files = [
     { rel: "api/pulse/route.ts", content: pulseRoute },
+    { rel: "api/pulse/auth/route.ts", content: authRoute },
     { rel: "api/pulse/refresh-aggregates/route.ts", content: refreshRoute },
     { rel: "api/pulse/consolidate/route.ts", content: consolidateRoute },
     { rel: "admin/analytics/page.tsx", content: dashboardPage },

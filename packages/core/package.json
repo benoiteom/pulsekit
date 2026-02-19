@@ -15,17 +15,20 @@
   "engines": {
     "node": ">=18"
   },
+  "type": "module",
   "main": "./dist/index.mjs",
-  "types": "./dist/index.d.mts",
-  "files": ["dist", "sql"],
+  "types": "./dist/index.d.ts",
+  "sideEffects": false,
+  "files": ["dist"],
   "exports": {
     ".": {
       "import": "./dist/index.mjs",
-      "types": "./dist/index.d.mts"
+      "types": "./dist/index.d.ts"
     }
   },
   "scripts": {
     "build": "tsup",
+    "prepublishOnly": "pnpm run build",
     "dev": "tsup --watch",
     "clean": "rm -rf dist",
     "lint": "eslint src/"

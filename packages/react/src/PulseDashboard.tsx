@@ -18,6 +18,8 @@ export interface PulseDashboardProps {
   timeframe?: Timeframe;
   timezone?: string;
   refreshEndpoint?: string;
+  /** Called when a data query fails. By default failures are not logged. */
+  onError?: (error: unknown) => void;
 }
 
 export async function PulseDashboard({
@@ -26,22 +28,23 @@ export async function PulseDashboard({
   timeframe = "7d",
   timezone,
   refreshEndpoint,
+  onError,
 }: PulseDashboardProps) {
   const [stats, vitals, errors, aggregates] = await Promise.all([
     getPulseStats({ supabase, siteId, timeframe, timezone }).catch((err) => {
-      console.error("getPulseStats failed:", err);
+      onError?.(err);
       return { daily: [], topPages: [], locations: [] };
     }),
     getPulseVitals({ supabase, siteId, timeframe, timezone }).catch((err) => {
-      console.error("getPulseVitals failed:", err);
+      onError?.(err);
       return { overall: [], byPage: [] };
     }),
     getPulseErrors({ supabase, siteId, timeframe, timezone }).catch((err) => {
-      console.error("getPulseErrors failed:", err);
+      onError?.(err);
       return { errors: [], totalErrorCount: 0, totalFrontendErrors: 0, totalServerErrors: 0 };
     }),
     getPulseAggregates({ supabase, siteId, timeframe, timezone }).catch((err) => {
-      console.error("getPulseAggregates failed:", err);
+      onError?.(err);
       return { rows: [], totalRows: 0, totalViews: 0 };
     }),
   ]);

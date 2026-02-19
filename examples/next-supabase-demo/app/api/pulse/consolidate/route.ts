@@ -1,9 +1,9 @@
-import { createConsolidateHandler } from "@pulsekit/next";
+import { createConsolidateHandler, withPulseAuth } from "@pulsekit/next";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
 );
 
-export const POST = createConsolidateHandler({ supabase });
+export const POST = withPulseAuth(createConsolidateHandler({ supabase }));

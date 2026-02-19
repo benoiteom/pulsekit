@@ -16,6 +16,7 @@ export default defineConfig({
   format: ["cjs"],
   target: "node18",
   platform: "node",
+  sourcemap: true,
   clean: true,
   banner: { js: "#!/usr/bin/env node" },
   define: {

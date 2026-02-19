@@ -15,11 +15,14 @@
   "engines": {
     "node": ">=18"
   },
+  "main": "./dist/index.js",
   "bin": "./dist/index.js",
+  "sideEffects": false,
   "files": ["dist"],
   "scripts": {
     "prebuild": "cp ../core/sql/*.sql src/sql/",
     "build": "tsup",
+    "prepublishOnly": "pnpm run build",
     "clean": "rm -rf dist",
     "lint": "eslint src/"
   },

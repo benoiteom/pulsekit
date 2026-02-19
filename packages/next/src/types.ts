@@ -14,6 +14,10 @@ export interface PulseHandlerConfig {
     rateLimit?: number;
     /** Rate limit window in seconds. Defaults to 60. */
     rateLimitWindow?: number;
+    /** Secret for ingestion token validation. If set, requests must include a valid x-pulse-token header. */
+    secret?: string;
+    /** Called when an event fails to insert into the database. By default failures are not logged. */
+    onError?: (error: unknown) => void;
   };
 }
 

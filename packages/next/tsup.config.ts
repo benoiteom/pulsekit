@@ -8,8 +8,10 @@ export default defineConfig({
   },
   format: ["esm"],
   dts: true,
+  sourcemap: true,
   clean: true,
   external: ["next", "react", "web-vitals"],
+  outExtension: () => ({ js: ".mjs", dts: ".d.ts" }),
   async onSuccess() {
     const clientPath = "./dist/client.mjs";
     const content = readFileSync(clientPath, "utf-8");

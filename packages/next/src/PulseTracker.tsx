@@ -17,6 +17,10 @@ export interface PulseTrackerProps {
   excludePaths?: string[];
   captureErrors?: boolean;
   errorLimit?: number;
+  /** Signed ingestion token for authenticated event collection. */
+  token?: string;
+  /** Called when a tracking request fails (e.g., network error, CORS failure). */
+  onError?: (error: unknown) => void;
 }
 
 export function PulseTracker({
@@ -24,12 +28,16 @@ export function PulseTracker({
   excludePaths,
   captureErrors = true,
   errorLimit = 10,
+  token,
+  onError,
 }: PulseTrackerProps) {
   const vitalsRef = useRef<Record<string, number>>({});
   const hasSentVitalsRef = useRef(false);
   const sessionIdRef = useRef<string | null>(null);
   const errorCountRef = useRef(0);
   const sentFingerprintsRef = useRef<Set<string>>(new Set());
+  const onErrorRef = useRef(onError);
+  onErrorRef.current = onError;
 
   useEffect(() => {
     sessionIdRef.current = getSessionId();
@@ -38,23 +46,27 @@ export function PulseTracker({
   useEffect(() => {
     // Detect browser timezone and store in cookie for server-side reading
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    document.cookie = `pulse_tz=${encodeURIComponent(tz)}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`;
+    const secure = window.location.protocol === "https:" ? "; Secure" : "";
+    document.cookie = `pulse_tz=${encodeURIComponent(tz)}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax${secure}`;
 
     if (excludePaths?.includes(window.location.pathname)) return;
 
     const sessionId = getSessionId();
     sessionIdRef.current = sessionId;
 
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (token) headers["x-pulse-token"] = token;
+
     fetch(endpoint, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({
         type: "pageview",
         path: window.location.pathname,
         sessionId,
       }),
-    }).catch(() => {});
-  }, [endpoint, excludePaths]);
+    }).catch((e) => { onErrorRef.current?.(e); });
+  }, [endpoint, excludePaths, token]);
 
   useEffect(() => {
     if (excludePaths?.includes(window.location.pathname)) return;
@@ -85,18 +97,20 @@ export function PulseTracker({
         meta: { ...metrics },
       });
 
-      if (typeof navigator.sendBeacon === "function") {
+      if (!token && typeof navigator.sendBeacon === "function") {
         navigator.sendBeacon(
           endpoint,
           new Blob([body], { type: "application/json" })
         );
       } else {
+        const hdrs: Record<string, string> = { "Content-Type": "application/json" };
+        if (token) hdrs["x-pulse-token"] = token;
         fetch(endpoint, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: hdrs,
           body,
           keepalive: true,
-        }).catch(() => {});
+        }).catch((e) => { onErrorRef.current?.(e); });
       }
     }
 
@@ -113,7 +127,7 @@ export function PulseTracker({
       document.removeEventListener("visibilitychange", onVisibilityChange);
       window.removeEventListener("pagehide", sendVitals);
     };
-  }, [endpoint, excludePaths]);
+  }, [endpoint, excludePaths, token]);
 
   // ── Error capture ──────────────────────────────────────────────────
   useEffect(() => {
@@ -127,16 +141,19 @@ export function PulseTracker({
       sentFingerprintsRef.current.add(fingerprint);
       errorCountRef.current++;
 
+      const hdrs: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) hdrs["x-pulse-token"] = token;
+
       fetch(endpoint, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: hdrs,
         body: JSON.stringify({
           type: "error",
           path: window.location.pathname,
           sessionId: sessionIdRef.current,
           meta,
         }),
-      }).catch(() => {});
+      }).catch((e) => { onErrorRef.current?.(e); });
     }
 
     function truncateStack(stack: string | undefined): string | null {
@@ -144,7 +161,7 @@ export function PulseTracker({
       return stack.split("\n").slice(0, 10).join("\n").slice(0, 2048);
     }
 
-    function onError(event: ErrorEvent) {
+    function onWindowError(event: ErrorEvent) {
       sendError({
         message: String(event.message).slice(0, 1024),
         source: event.filename ?? null,
@@ -169,14 +186,14 @@ export function PulseTracker({
       });
     }
 
-    window.addEventListener("error", onError);
+    window.addEventListener("error", onWindowError);
     window.addEventListener("unhandledrejection", onUnhandledRejection);
 
     return () => {
-      window.removeEventListener("error", onError);
+      window.removeEventListener("error", onWindowError);
       window.removeEventListener("unhandledrejection", onUnhandledRejection);
     };
-  }, [captureErrors, errorLimit, endpoint]);
+  }, [captureErrors, errorLimit, endpoint, token]);
 
   return null;
 }

@@ -10,5 +10,6 @@ export const POST = createPulseHandler({
   supabase,
   config: {
     siteId: "demo",
+    secret: process.env.PULSE_SECRET,
   },
 });

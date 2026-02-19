@@ -5,6 +5,16 @@ export interface PulseErrorReporterConfig {
   siteId?: string;
 }
 
+/**
+ * Create an `onRequestError` handler for Next.js instrumentation that reports
+ * server-side errors to Supabase as `server_error` events. Designed to be
+ * used in `instrumentation.ts`.
+ *
+ * @example
+ * ```ts
+ * export const onRequestError = createPulseErrorReporter({ supabase });
+ * ```
+ */
 export function createPulseErrorReporter({ supabase, siteId = "default" }: PulseErrorReporterConfig) {
   return async function onRequestError(
     error: { digest: string; message: string; stack?: string },

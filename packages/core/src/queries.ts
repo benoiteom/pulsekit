@@ -66,6 +66,10 @@ export interface PulseStats {
   locations: LocationStat[];
 }
 
+/**
+ * Convert a {@link Timeframe} into a concrete `{ startDate, endDate }` pair
+ * (ISO date strings, e.g. `"2025-01-15"`), anchored to the given IANA timezone.
+ */
 export function dateRangeFromTimeframe(
   timeframe: Timeframe,
   timezone: string
@@ -84,6 +88,11 @@ export function dateRangeFromTimeframe(
   return { startDate, endDate };
 }
 
+/**
+ * Fetch pageview statistics (daily totals, top pages, and locations) for a site
+ * within the given timeframe. Calls the `pulse_stats_by_timezone` and
+ * `pulse_location_stats` Supabase RPCs in parallel.
+ */
 export async function getPulseStats(opts: {
   supabase: SupabaseClient;
   siteId: string;
@@ -93,26 +102,25 @@ export async function getPulseStats(opts: {
   const { supabase, siteId, timeframe, timezone = "UTC" } = opts;
   const { startDate, endDate } = dateRangeFromTimeframe(timeframe, timezone);
 
-  const { data: rows, error } = await supabase
-    .schema("analytics")
-    .rpc("pulse_stats_by_timezone", {
+  const [statsResult, locationResult] = await Promise.all([
+    supabase.schema("analytics").rpc("pulse_stats_by_timezone", {
       p_site_id: siteId,
       p_timezone: timezone,
       p_start_date: startDate,
       p_end_date: endDate,
-    });
-
-  // Fetch location stats in parallel
-  const { data: locationRows, error: locationError } = await supabase
-    .schema("analytics")
-    .rpc("pulse_location_stats", {
+    }),
+    supabase.schema("analytics").rpc("pulse_location_stats", {
       p_site_id: siteId,
       p_start_date: startDate,
       p_end_date: endDate,
-    });
+    }),
+  ]);
 
-  if (error) throw error;
-  if (locationError) throw locationError;
+  if (statsResult.error) throw statsResult.error;
+  if (locationResult.error) throw locationResult.error;
+
+  const rows = statsResult.data;
+  const locationRows = locationResult.data;
 
   const locations: LocationStat[] = (locationRows ?? []).map(
     (row: { country: string; city: string | null; latitude: number | null; longitude: number | null; total_views: number; unique_visitors: number }) => ({
@@ -218,6 +226,10 @@ export interface AggregatesOverview {
 
 // ── Aggregates query ────────────────────────────────────────────────
 
+/**
+ * Fetch pre-aggregated daily analytics rows for a site within the given
+ * timeframe. Returns rows sorted by date (descending) then path.
+ */
 export async function getPulseAggregates(opts: {
   supabase: SupabaseClient;
   siteId: string;
@@ -258,6 +270,11 @@ export async function getPulseAggregates(opts: {
 
 // ── Web Vitals query ────────────────────────────────────────────────
 
+/**
+ * Fetch Core Web Vitals statistics (LCP, INP, CLS, FCP, TTFB) for a site.
+ * Returns an overall summary and per-page breakdowns, each rated as
+ * "good", "needs-improvement", or "poor" based on standard thresholds.
+ */
 export async function getPulseVitals(opts: {
   supabase: SupabaseClient;
   siteId: string;
@@ -314,6 +331,11 @@ export async function getPulseVitals(opts: {
 
 // ── Error stats query ───────────────────────────────────────────────
 
+/**
+ * Fetch error statistics for a site within the given timeframe.
+ * Groups errors by type/message/path and returns counts, first/last seen
+ * timestamps, and a breakdown of frontend vs server errors.
+ */
 export async function getPulseErrors(opts: {
   supabase: SupabaseClient;
   siteId: string;
