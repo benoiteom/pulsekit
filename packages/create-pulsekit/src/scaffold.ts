@@ -81,8 +81,8 @@ async function Dashboard() {
 
 export default function AnalyticsPage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center min-h-screen p-6"><Spinner className="size-6" /></div>}>
-      <PulseAuthGate secret={process.env.PULSE_SECRET}>
+    <Suspense fallback={<div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", padding: "1.5rem" }}><Spinner style={{ width: 24, height: 24 }} /></div>}>
+      <PulseAuthGate secret={process.env.PULSE_SECRET!}>
         <Dashboard />
       </PulseAuthGate>
     </Suspense>
@@ -110,18 +110,26 @@ export default async function PulseTrackerWrapper() {
 `;
 
   // Scaffold the spinner component if not already present
-  const spinnerContent = `import { LoaderIcon } from "lucide-react"
-import { cn } from "@/lib/utils"
-
-function Spinner({ className, ...props }: React.ComponentProps<"svg">) {
+  const spinnerContent = `function Spinner({ style, ...props }: React.ComponentProps<"svg">) {
   return (
-    <LoaderIcon
-      role="status"
-      aria-label="Loading"
-      className={cn("size-4 animate-spin", className)}
-      {...props}
-    />
-  )
+    <>
+      <style>{\`@keyframes pulsekit-spin { to { transform: rotate(360deg) } }\`}</style>
+      <svg
+        role="status"
+        aria-label="Loading"
+        width="16"
+        height="16"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        style={{ animation: "pulsekit-spin 1s linear infinite", ...style }}
+        {...props}
+      >
+        <circle opacity={0.25} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+        <path opacity={0.75} fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+      </svg>
+    </>
+  );
 }
 
 export { Spinner }

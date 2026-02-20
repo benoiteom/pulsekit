@@ -61,6 +61,7 @@ Mocking patterns: Supabase is mocked as a chainable object (`schema → from/rpc
 - `@pulsekit/next` uses `"use client"` banner on its client entry point via tsup config
 - `@pulsekit/react` builds with `bundle: false` (unbundled output)
 - Supabase is a peer dependency — not bundled with any package
+- **No Tailwind in packages** — PulseKit packages must not depend on Tailwind CSS. Scaffolded components and templates use inline styles only. Tailwind may exist in example apps but never in `packages/*`.
 
 ## Running Migrations (Example App)
 
