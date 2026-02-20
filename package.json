@@ -17,7 +17,7 @@
   "scripts": {
     "build": "turbo build --filter='!./examples/*'",
     "dev": "turbo dev",
-    "lint": "turbo lint",
+    "lint": "turbo lint --filter='!./examples/*'",
     "clean": "turbo clean",
     "test": "vitest run"
   },
