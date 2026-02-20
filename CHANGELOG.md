@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.4] - 2026-02-19
+
+### Fixed
+
+- **@pulsekit/react**: Add dark mode support — dashboard CSS custom properties now adapt to `.dark`, `[data-theme="dark"]`, and `prefers-color-scheme: dark` (KPI backgrounds, vital rating colors, map fills, border colors)
+- **@pulsekit/react**: Fix chart tooltip text color using `--pulse-fg` so it's readable in dark mode
+
+### Changed
+
+- Replace `next-supabase-demo` example with `with-supabase-pulsekit` (standalone template using npm-published packages) and `with-supabase-pulsekit-local` (workspace-linked for local development)
+
 ## [1.0.3] - 2026-02-19
 
 ### Fixed

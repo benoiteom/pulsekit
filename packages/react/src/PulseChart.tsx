@@ -48,6 +48,7 @@ export function PulseChart({ data }: PulseChartProps): React.ReactElement | null
             backgroundColor: "var(--pulse-bg)",
             border: "1px solid var(--pulse-border)",
             borderRadius: "var(--pulse-radius)",
+            color: "var(--pulse-fg)",
             fontSize: 12,
           }}
         />

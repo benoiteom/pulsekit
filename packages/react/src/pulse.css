@@ -36,6 +36,36 @@
   --pulse-btn-border: hsl(var(--border, 0 0% 89.8%));
 }
 
+/* Dark mode overrides for hardcoded light-only colors */
+.dark,
+[data-theme="dark"] {
+  --pulse-kpi-bg: rgba(124, 58, 237, 0.1);
+  --pulse-border-light: hsl(var(--border, 0 0% 14.9%));
+  --pulse-vital-good-bg: rgba(34, 197, 94, 0.12);
+  --pulse-vital-good-fg: #4ade80;
+  --pulse-vital-warn-bg: rgba(234, 179, 8, 0.12);
+  --pulse-vital-warn-fg: #facc15;
+  --pulse-vital-poor-bg: rgba(239, 68, 68, 0.12);
+  --pulse-vital-poor-fg: #f87171;
+  --pulse-map-land: #1e1e2e;
+  --pulse-map-land-stroke: #374151;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light):not([data-theme="light"]) {
+    --pulse-kpi-bg: rgba(124, 58, 237, 0.1);
+    --pulse-border-light: hsl(var(--border, 0 0% 14.9%));
+    --pulse-vital-good-bg: rgba(34, 197, 94, 0.12);
+    --pulse-vital-good-fg: #4ade80;
+    --pulse-vital-warn-bg: rgba(234, 179, 8, 0.12);
+    --pulse-vital-warn-fg: #facc15;
+    --pulse-vital-poor-bg: rgba(239, 68, 68, 0.12);
+    --pulse-vital-poor-fg: #f87171;
+    --pulse-map-land: #1e1e2e;
+    --pulse-map-land-stroke: #374151;
+  }
+}
+
 /* Hover utilities for server components */
 .pulse-table-row:hover {
   background-color: var(--pulse-kpi-bg);
