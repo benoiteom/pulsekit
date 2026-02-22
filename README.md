@@ -14,7 +14,7 @@
 
 ---
 
-PulseKit gives you a self-hosted analytics dashboard inside your Next.js app, backed by Supabase. Track page views, Web Vitals, errors, and visitor geography — no third-party scripts, no external services.
+PulseKit gives you a self-hosted analytics dashboard inside your Next.js app, backed by Supabase. Track page views, traffic sources, Web Vitals, errors, and visitor geography — no third-party scripts, no external services.
 
 ## AI-Assisted Installation
 
@@ -528,6 +528,7 @@ Client component that tracks page views, Web Vitals, and errors.
 
 **What it tracks automatically:**
 - Page views on route changes
+- Traffic sources via `document.referrer` (stored as hostname only for privacy)
 - Web Vitals (LCP, INP, CLS, FCP, TTFB) via the `web-vitals` library
 - Client-side errors (`window.onerror`, `unhandledrejection`)
 - Browser timezone (stored in a `pulse_tz` cookie)

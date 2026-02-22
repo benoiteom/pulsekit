@@ -1,6 +1,6 @@
 {
   "name": "create-pulsekit",
-  "version": "1.0.5",
+  "version": "1.1.0",
   "description": "Set up PulseKit analytics in your Next.js project",
   "keywords": ["analytics", "nextjs", "supabase", "cli", "scaffolding", "pulsekit"],
   "license": "MIT",

@@ -8,5 +8,6 @@ export { RefreshButton, type RefreshButtonProps } from "./RefreshButton.js";
 export { PulseIcon, type PulseIconProps } from "./PulseIcon.js";
 export { KpiRow, type KpiRowProps } from "./KpiRow.js";
 export { PulseDateRangePicker, type PulseDateRangePickerProps } from "./PulseDateRangePicker.js";
+export { PulseReferrers, type PulseReferrersProps } from "./PulseReferrers.js";
 export { PulseAuthGate, type PulseAuthGateProps } from "./PulseAuthGate.js";
 export { PulseLoginForm, type PulseLoginFormProps } from "./PulseLoginForm.js";

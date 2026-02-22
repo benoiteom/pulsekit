@@ -18,6 +18,7 @@ interface ParsedEvent {
   sessionId?: string;
   meta?: Record<string, unknown>;
   siteId?: string;
+  referrer?: string;
 }
 
 function parseEvent(
@@ -58,6 +59,12 @@ function parseEvent(
     }
   }
 
+  if (obj.referrer !== undefined && obj.referrer !== null) {
+    if (typeof obj.referrer !== "string" || obj.referrer.length > 256) {
+      return { success: false };
+    }
+  }
+
   return {
     success: true,
     data: {
@@ -66,6 +73,7 @@ function parseEvent(
       sessionId: obj.sessionId as string | undefined,
       meta: obj.meta as Record<string, unknown> | undefined,
       siteId: obj.siteId as string | undefined,
+      referrer: (typeof obj.referrer === "string" ? obj.referrer : undefined),
     },
   };
 }
@@ -205,6 +213,7 @@ export function createPulseHandler({ supabase, config }: PulseHandlerConfig) {
           path: event.path,
           event_type: event.type,
           meta: event.meta ?? null,
+          referrer: event.referrer ?? null,
           country,
           region,
           city,

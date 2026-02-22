@@ -57,6 +57,11 @@ export function PulseTracker({
     const headers: Record<string, string> = { "Content-Type": "application/json" };
     if (token) headers["x-pulse-token"] = token;
 
+    // Extract hostname from document.referrer for privacy (no full URLs stored)
+    const ref = document.referrer;
+    let referrer: string | null = null;
+    try { referrer = ref ? new URL(ref).hostname : null; } catch { /* invalid URL */ }
+
     fetch(endpoint, {
       method: "POST",
       headers,
@@ -64,6 +69,7 @@ export function PulseTracker({
         type: "pageview",
         path: window.location.pathname,
         sessionId,
+        referrer,
       }),
     }).catch((e) => { onErrorRef.current?.(e); });
   }, [endpoint, excludePaths, token]);

@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-02-22
+
+### Added
+
+- **@pulsekit/core**: Add `getPulseReferrers` query and `ReferrerStat`/`ReferrersOverview` types for traffic source analytics
+- **@pulsekit/core**: Add `009_referrer_tracking.sql` migration — `referrer` column, partial index, and `pulse_referrer_stats` RPC function
+- **@pulsekit/next**: Capture `document.referrer` hostname in `PulseTracker` pageview events
+- **@pulsekit/next**: Accept and store `referrer` field in `createPulseHandler`
+- **@pulsekit/react**: Add `PulseReferrers` component displaying top traffic sources table
+- **@pulsekit/react**: Integrate traffic sources into `PulseDashboard` in a 2-column grid alongside Top Pages
+- **create-pulsekit**: Include referrer tracking migration in scaffolded projects
+
 ## [1.0.6] - 2026-02-22
 
 ### Changed

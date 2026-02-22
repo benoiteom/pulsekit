@@ -350,6 +350,43 @@ describe("createPulseHandler", () => {
     expect(insert).toHaveBeenCalledOnce();
   });
 
+  it("passes referrer field through to insert", async () => {
+    const { client, insert } = mockSupabase();
+    const handler = createPulseHandler({ supabase: client as any });
+
+    const resp: any = await handler(
+      makeReq({ body: { type: "pageview", path: "/test", referrer: "linkedin.com" } })
+    );
+
+    expect(resp.status).toBe(200);
+    expect(insert).toHaveBeenCalledWith(
+      expect.objectContaining({ referrer: "linkedin.com" })
+    );
+  });
+
+  it("stores null referrer when not provided", async () => {
+    const { client, insert } = mockSupabase();
+    const handler = createPulseHandler({ supabase: client as any });
+
+    const resp: any = await handler(makeReq({ body: validBody }));
+
+    expect(resp.status).toBe(200);
+    expect(insert).toHaveBeenCalledWith(
+      expect.objectContaining({ referrer: null })
+    );
+  });
+
+  it("returns 400 when referrer exceeds 256 chars", async () => {
+    const { client } = mockSupabase();
+    const handler = createPulseHandler({ supabase: client as any });
+
+    const resp: any = await handler(
+      makeReq({ body: { type: "pageview", path: "/", referrer: "a".repeat(257) } })
+    );
+    expect(resp.status).toBe(400);
+    expect(resp.body).toEqual({ error: "Invalid payload" });
+  });
+
   describe("ingestion token validation", () => {
     const SECRET = "ingestion-test-secret";
 

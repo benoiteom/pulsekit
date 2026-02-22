@@ -1,12 +1,13 @@
 import React from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getPulseStats, getPulseVitals, getPulseErrors, getPulseAggregates, dateRangeFromTimeframe, type Timeframe } from "@pulsekit/core";
+import { getPulseStats, getPulseVitals, getPulseErrors, getPulseAggregates, getPulseReferrers, dateRangeFromTimeframe, type Timeframe } from "@pulsekit/core";
 import { Card } from "./Card.js";
 import { PulseChart } from "./PulseChart.js";
 import { PulseMap } from "./PulseMap.js";
 import { PulseVitals } from "./PulseVitals.js";
 import { PulseErrors } from "./PulseErrors.js";
 import { PulseAggregates } from "./PulseAggregates.js";
+import { PulseReferrers } from "./PulseReferrers.js";
 import { RefreshButton } from "./RefreshButton.js";
 import { PulseIcon } from "./PulseIcon.js";
 import { PulseDateRangePicker } from "./PulseDateRangePicker.js";
@@ -30,7 +31,7 @@ export async function PulseDashboard({
   refreshEndpoint,
   onError,
 }: PulseDashboardProps) {
-  const [stats, vitals, errors, aggregates] = await Promise.all([
+  const [stats, vitals, errors, aggregates, referrers] = await Promise.all([
     getPulseStats({ supabase, siteId, timeframe, timezone }).catch((err) => {
       onError?.(err);
       return { daily: [], topPages: [], locations: [] };
@@ -46,6 +47,10 @@ export async function PulseDashboard({
     getPulseAggregates({ supabase, siteId, timeframe, timezone }).catch((err) => {
       onError?.(err);
       return { rows: [], totalRows: 0, totalViews: 0 };
+    }),
+    getPulseReferrers({ supabase, siteId, timeframe, timezone }).catch((err) => {
+      onError?.(err);
+      return { referrers: [], totalSources: 0 };
     }),
   ]);
 
@@ -94,7 +99,7 @@ export async function PulseDashboard({
           )}
         </Card>
 
-        <div className={hasVitals ? "pulse-dashboard-grid" : ""}>
+        <div className="pulse-dashboard-grid">
           <Card title="Top pages">
             {stats.topPages.length === 0 ? (
               <p className="pulse-text-empty">
@@ -122,12 +127,16 @@ export async function PulseDashboard({
             )}
           </Card>
 
-          {hasVitals && (
-            <Card title="Web Vitals">
-              <PulseVitals data={vitals} />
-            </Card>
-          )}
+          <Card title="Traffic sources">
+            <PulseReferrers data={referrers} />
+          </Card>
         </div>
+
+        {hasVitals && (
+          <Card title="Web Vitals">
+            <PulseVitals data={vitals} />
+          </Card>
+        )}
 
         {errors.totalErrorCount > 0 && (
           <Card title="Errors">

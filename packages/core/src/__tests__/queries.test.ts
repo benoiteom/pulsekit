@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getPulseStats, getPulseVitals, getPulseErrors } from "../queries";
+import { getPulseStats, getPulseVitals, getPulseErrors, getPulseReferrers } from "../queries";
 
 // Use custom timeframe objects to bypass dateRangeFromTimeframe date math
 const timeframe = { from: "2025-01-01", to: "2025-01-07" };
@@ -232,5 +232,59 @@ describe("getPulseErrors", () => {
     expect(result.totalServerErrors).toBe(7);
     expect(result.totalErrorCount).toBe(20);
     expect(result.errors).toHaveLength(3);
+  });
+});
+
+// ── getPulseReferrers ─────────────────────────────────────────────
+
+describe("getPulseReferrers", () => {
+  it("maps fields from snake_case to camelCase", async () => {
+    const supabase = mockRpc({
+      pulse_referrer_stats: {
+        data: [
+          { referrer: "(direct)", total_views: "312", unique_visitors: "200" },
+          { referrer: "linkedin.com", total_views: "187", unique_visitors: "120" },
+        ],
+        error: null,
+      },
+    });
+
+    const result = await getPulseReferrers({ supabase, siteId: "test", timeframe });
+
+    expect(result.referrers).toEqual([
+      { referrer: "(direct)", totalViews: 312, uniqueVisitors: 200 },
+      { referrer: "linkedin.com", totalViews: 187, uniqueVisitors: 120 },
+    ]);
+    expect(result.totalSources).toBe(2);
+  });
+
+  it("returns empty referrers when no data", async () => {
+    const supabase = mockRpc({
+      pulse_referrer_stats: { data: [], error: null },
+    });
+
+    const result = await getPulseReferrers({ supabase, siteId: "test", timeframe });
+
+    expect(result).toEqual({ referrers: [], totalSources: 0 });
+  });
+
+  it("handles null data gracefully", async () => {
+    const supabase = mockRpc({
+      pulse_referrer_stats: { data: null, error: null },
+    });
+
+    const result = await getPulseReferrers({ supabase, siteId: "test", timeframe });
+
+    expect(result).toEqual({ referrers: [], totalSources: 0 });
+  });
+
+  it("throws on RPC error", async () => {
+    const supabase = mockRpc({
+      pulse_referrer_stats: { data: null, error: { message: "referrer fail" } },
+    });
+
+    await expect(
+      getPulseReferrers({ supabase, siteId: "test", timeframe })
+    ).rejects.toEqual({ message: "referrer fail" });
   });
 });

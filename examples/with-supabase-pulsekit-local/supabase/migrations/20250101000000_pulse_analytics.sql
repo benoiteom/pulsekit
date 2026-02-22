@@ -1,0 +1,1 @@
+-- Already applied remotely. See examples/with-supabase-pulsekit for full content.

@@ -189,6 +189,55 @@ export async function getPulseStats(opts: {
   return { daily, topPages, locations };
 }
 
+// ── Referrer types ──────────────────────────────────────────────────
+
+export interface ReferrerStat {
+  referrer: string;
+  totalViews: number;
+  uniqueVisitors: number;
+}
+
+export interface ReferrersOverview {
+  referrers: ReferrerStat[];
+  totalSources: number;
+}
+
+// ── Referrer query ──────────────────────────────────────────────────
+
+/**
+ * Fetch top traffic sources (referrer hostnames) for a site within the
+ * given timeframe. Calls the `pulse_referrer_stats` Supabase RPC.
+ */
+export async function getPulseReferrers(opts: {
+  supabase: SupabaseClient;
+  siteId: string;
+  timeframe: Timeframe;
+  timezone?: string;
+}): Promise<ReferrersOverview> {
+  const { supabase, siteId, timeframe, timezone = "UTC" } = opts;
+  const { startDate, endDate } = dateRangeFromTimeframe(timeframe, timezone);
+
+  const { data: rows, error } = await supabase
+    .schema("analytics")
+    .rpc("pulse_referrer_stats", {
+      p_site_id: siteId,
+      p_start_date: startDate,
+      p_end_date: endDate,
+    });
+
+  if (error) throw error;
+
+  const referrers: ReferrerStat[] = (rows ?? []).map(
+    (row: { referrer: string; total_views: number; unique_visitors: number }) => ({
+      referrer: row.referrer,
+      totalViews: Number(row.total_views),
+      uniqueVisitors: Number(row.unique_visitors),
+    })
+  );
+
+  return { referrers, totalSources: referrers.length };
+}
+
 // ── Error types ─────────────────────────────────────────────────────
 
 export interface ErrorStat {

@@ -7,12 +7,14 @@ const mockGetPulseStats = vi.fn();
 const mockGetPulseVitals = vi.fn();
 const mockGetPulseErrors = vi.fn();
 const mockGetPulseAggregates = vi.fn();
+const mockGetPulseReferrers = vi.fn();
 
 vi.mock("@pulsekit/core", () => ({
   getPulseStats: (...args: unknown[]) => mockGetPulseStats(...args),
   getPulseVitals: (...args: unknown[]) => mockGetPulseVitals(...args),
   getPulseErrors: (...args: unknown[]) => mockGetPulseErrors(...args),
   getPulseAggregates: (...args: unknown[]) => mockGetPulseAggregates(...args),
+  getPulseReferrers: (...args: unknown[]) => mockGetPulseReferrers(...args),
   dateRangeFromTimeframe: () => ({ startDate: "2025-01-01", endDate: "2025-01-07" }),
 }));
 
@@ -22,6 +24,7 @@ vi.mock("../PulseMap", () => ({ PulseMap: () => null }));
 vi.mock("../PulseVitals", () => ({ PulseVitals: () => null }));
 vi.mock("../PulseErrors", () => ({ PulseErrors: () => null }));
 vi.mock("../PulseAggregates", () => ({ PulseAggregates: () => null }));
+vi.mock("../PulseReferrers", () => ({ PulseReferrers: () => null }));
 vi.mock("../RefreshButton", () => ({ RefreshButton: () => null }));
 vi.mock("../PulseIcon", () => ({ PulseIcon: () => null }));
 vi.mock("../PulseDateRangePicker", () => ({ PulseDateRangePicker: () => null }));
@@ -54,6 +57,7 @@ function emptyResults() {
     errors: [], totalErrorCount: 0, totalFrontendErrors: 0, totalServerErrors: 0,
   });
   mockGetPulseAggregates.mockResolvedValue({ rows: [], totalRows: 0, totalViews: 0 });
+  mockGetPulseReferrers.mockResolvedValue({ referrers: [], totalSources: 0 });
 }
 
 function populatedResults() {
@@ -84,6 +88,13 @@ function populatedResults() {
     rows: [{ date: "2025-01-01", path: "/", totalViews: 100, uniqueVisitors: 50 }],
     totalRows: 1,
     totalViews: 100,
+  });
+  mockGetPulseReferrers.mockResolvedValue({
+    referrers: [
+      { referrer: "(direct)", totalViews: 150, uniqueVisitors: 70 },
+      { referrer: "google.com", totalViews: 100, uniqueVisitors: 50 },
+    ],
+    totalSources: 2,
   });
 }
 
@@ -195,6 +206,7 @@ describe("PulseDashboard", () => {
     expect(tags).toContain("kpi");
     expect(tags).toContain("card:Traffic over time");
     expect(tags).toContain("card:Top pages");
+    expect(tags).toContain("card:Traffic sources");
     expect(tags).toContain("card:Web Vitals");
     expect(tags).toContain("card:Errors");
     expect(tags).toContain("card:Visitors by location");
@@ -212,7 +224,7 @@ describe("PulseDashboard", () => {
     expect(kpi!.props["data-avg"]).toBe(150);        // 300 / 2
   });
 
-  it("calls all four data functions with correct args", async () => {
+  it("calls all five data functions with correct args", async () => {
     emptyResults();
     await PulseDashboard({ supabase: mockSupabase, siteId: "my-site", timeframe: "30d", timezone: "US/Pacific" });
 
@@ -224,6 +236,9 @@ describe("PulseDashboard", () => {
     );
     expect(mockGetPulseErrors).toHaveBeenCalledOnce();
     expect(mockGetPulseAggregates).toHaveBeenCalledOnce();
+    expect(mockGetPulseReferrers).toHaveBeenCalledWith(
+      expect.objectContaining({ siteId: "my-site", timeframe: "30d", timezone: "US/Pacific" }),
+    );
   });
 
   it("gracefully handles individual data fetch failures", async () => {
@@ -231,6 +246,7 @@ describe("PulseDashboard", () => {
     mockGetPulseVitals.mockRejectedValue(new Error("DB error"));
     mockGetPulseErrors.mockRejectedValue(new Error("DB error"));
     mockGetPulseAggregates.mockRejectedValue(new Error("DB error"));
+    mockGetPulseReferrers.mockRejectedValue(new Error("DB error"));
 
     // Should not throw — each fetch has a .catch fallback
     const result = await PulseDashboard({ supabase: mockSupabase, siteId: "test" });
@@ -243,13 +259,15 @@ describe("PulseDashboard", () => {
     mockGetPulseVitals.mockRejectedValue(new Error("vitals fail"));
     mockGetPulseErrors.mockRejectedValue(new Error("errors fail"));
     mockGetPulseAggregates.mockRejectedValue(new Error("aggregates fail"));
+    mockGetPulseReferrers.mockRejectedValue(new Error("referrers fail"));
 
     await PulseDashboard({ supabase: mockSupabase, siteId: "test", onError });
 
-    expect(onError).toHaveBeenCalledTimes(4);
+    expect(onError).toHaveBeenCalledTimes(5);
     expect(onError).toHaveBeenCalledWith(expect.objectContaining({ message: "stats fail" }));
     expect(onError).toHaveBeenCalledWith(expect.objectContaining({ message: "vitals fail" }));
     expect(onError).toHaveBeenCalledWith(expect.objectContaining({ message: "errors fail" }));
     expect(onError).toHaveBeenCalledWith(expect.objectContaining({ message: "aggregates fail" }));
+    expect(onError).toHaveBeenCalledWith(expect.objectContaining({ message: "referrers fail" }));
   });
 });
