@@ -187,7 +187,8 @@ export function createPulseHandler({ supabase, config }: PulseHandlerConfig) {
     // Vercel provides these headers for free on all plans
     const country = req.headers.get("x-vercel-ip-country") ?? null;
     const region = req.headers.get("x-vercel-ip-country-region") ?? null;
-    const city = req.headers.get("x-vercel-ip-city") ?? null;
+    const cityRaw = req.headers.get("x-vercel-ip-city");
+    const city = cityRaw ? decodeURIComponent(cityRaw) : null;
     const timezone = req.headers.get("x-vercel-ip-timezone") ?? null;
     const latRaw = req.headers.get("x-vercel-ip-latitude");
     const lngRaw = req.headers.get("x-vercel-ip-longitude");

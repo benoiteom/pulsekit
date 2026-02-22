@@ -1,15 +1,21 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import {
-  ComposableMap,
-  Geographies,
-  Geography,
-  Marker,
-} from "react-simple-maps";
+import { geoNaturalEarth1, geoPath } from "d3-geo";
+import { feature } from "topojson-client";
+import type { Topology, GeometryCollection } from "topojson-specification";
 
 const GEO_URL =
   "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
+
+const WIDTH = 800;
+const HEIGHT = 400;
+
+const projection = geoNaturalEarth1()
+  .scale(147)
+  .translate([WIDTH / 2, HEIGHT / 2]);
+
+const pathGenerator = geoPath(projection);
 
 export interface PulseMapProps {
   data: {
@@ -36,9 +42,19 @@ function bubbleRadius(views: number, maxViews: number): number {
 }
 
 export function PulseMap({ data }: PulseMapProps): React.ReactElement {
-  const [mounted, setMounted] = useState(false);
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR mount guard
-  useEffect(() => setMounted(true), []);
+  const [geographies, setGeographies] = useState<GeoJSON.Feature[]>([]);
+
+  useEffect(() => {
+    fetch(GEO_URL)
+      .then((res) => res.json())
+      .then((topology: Topology) => {
+        const countries = feature(
+          topology,
+          topology.objects.countries as GeometryCollection
+        );
+        setGeographies(countries.features);
+      });
+  }, []);
 
   const { markers, maxViews } = useMemo(() => {
     const items = data.filter(
@@ -67,48 +83,39 @@ export function PulseMap({ data }: PulseMapProps): React.ReactElement {
   return (
     <div>
       <div className="pulse-map-container">
-        {!mounted ? (
-          <div style={{ height: 400 }} />
-        ) : (
-        <ComposableMap
-          projectionConfig={{ scale: 147 }}
-          width={800}
-          height={400}
+        <svg
+          viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
           style={{ width: "100%", height: "auto", display: "block" }}
         >
-          <Geographies geography={GEO_URL}>
-            {({ geographies }) =>
-              geographies.map((geo) => (
-                <Geography
-                  key={geo.rsmKey}
-                  geography={geo}
-                  fill="var(--pulse-map-land)"
-                  stroke="var(--pulse-map-land-stroke)"
-                  strokeWidth={0.5}
-                  style={{
-                    default: { outline: "none" },
-                    hover: { outline: "none" },
-                    pressed: { outline: "none" },
-                  }}
-                />
-              ))
-            }
-          </Geographies>
-          {markers.map((m, i) => (
-            <Marker
-              key={`${m.country}-${m.city ?? "unknown"}-${i}`}
-              coordinates={[m.longitude, m.latitude]}
-            >
-              <circle
-                r={bubbleRadius(m.totalViews, maxViews)}
-                fill="var(--pulse-map-marker)"
-                stroke="var(--pulse-map-marker-stroke)"
-                strokeWidth={1}
+          <g>
+            {geographies.map((geo, i) => (
+              <path
+                key={geo.id ?? i}
+                d={pathGenerator(geo) ?? ""}
+                fill="var(--pulse-map-land)"
+                stroke="var(--pulse-map-land-stroke)"
+                strokeWidth={0.5}
               />
-            </Marker>
-          ))}
-        </ComposableMap>
-        )}
+            ))}
+          </g>
+          <g>
+            {markers.map((m, i) => {
+              const coords = projection([m.longitude, m.latitude]);
+              if (!coords) return null;
+              return (
+                <circle
+                  key={`${m.country}-${m.city ?? "unknown"}-${i}`}
+                  cx={coords[0]}
+                  cy={coords[1]}
+                  r={bubbleRadius(m.totalViews, maxViews)}
+                  fill="var(--pulse-map-marker)"
+                  stroke="var(--pulse-map-marker-stroke)"
+                  strokeWidth={1}
+                />
+              );
+            })}
+          </g>
+        </svg>
       </div>
 
       {tableRows.length > 0 && (

@@ -273,7 +273,7 @@ describe("createPulseHandler", () => {
         headers: {
           "x-vercel-ip-country": "US",
           "x-vercel-ip-country-region": "CA",
-          "x-vercel-ip-city": "San Francisco",
+          "x-vercel-ip-city": "San%20Francisco",
           "x-vercel-ip-timezone": "America/Los_Angeles",
           "x-vercel-ip-latitude": "37.7749",
           "x-vercel-ip-longitude": "-122.4194",

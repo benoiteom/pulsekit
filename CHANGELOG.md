@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.6] - 2026-02-22
+
+### Changed
+
+- **@pulsekit/react**: Replace `react-simple-maps` with `d3-geo` + `topojson-client` in `PulseMap` — fixes React 19 peer dependency warnings, removes dependency on unmaintained package, and reduces bundle size (~24 kB vs ~35 kB)
+
+### Fixed
+
+- **@pulsekit/next**: Decode URL-encoded `x-vercel-ip-city` header so city names with spaces (e.g. "San Francisco") are stored correctly instead of as "San%20Francisco"
+
 ## [1.0.5] - 2026-02-20
 
 ### Fixed
