@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2026-02-22
+
+### Fixed
+
+- **@pulsekit/core**: Add `SET search_path = analytics` to all `SECURITY DEFINER` SQL functions to prevent search-path hijacking (Supabase linter 0011)
+- **@pulsekit/core**: Replace overly broad `GRANT ALL` to `anon` in `001_init_pulse.sql` with least-privilege grants — `anon` now only gets `INSERT` on `pulse_events`
+- **@pulsekit/core**: Remove unnecessary `anon` SELECT policy on `pulse_aggregates` from initial setup
+
 ## [1.1.0] - 2026-02-22
 
 ### Added
@@ -16,6 +24,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **@pulsekit/react**: Add `PulseReferrers` component displaying top traffic sources table
 - **@pulsekit/react**: Integrate traffic sources into `PulseDashboard` in a 2-column grid alongside Top Pages
 - **create-pulsekit**: Include referrer tracking migration in scaffolded projects
+
+**Upgrading from 1.0.x:** After updating packages, apply the new database migration:
+```bash
+cp node_modules/@pulsekit/core/sql/009_referrer_tracking.sql \
+   supabase/migrations/20260223000000_referrer_tracking.sql
+npx supabase db push
+```
 
 ## [1.0.6] - 2026-02-22
 

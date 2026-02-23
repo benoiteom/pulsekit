@@ -18,6 +18,7 @@ RETURNS TABLE (
   sample_count BIGINT
 )
 LANGUAGE sql SECURITY DEFINER STABLE
+SET search_path = analytics
 AS $$
   WITH vitals_raw AS (
     SELECT

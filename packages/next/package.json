@@ -1,6 +1,6 @@
 {
   "name": "@pulsekit/next",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Next.js API route handlers and client-side tracker for PulseKit",
   "keywords": ["analytics", "nextjs", "supabase", "web-vitals", "tracker", "pulsekit"],
   "license": "MIT",

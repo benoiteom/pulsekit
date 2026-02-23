@@ -19,6 +19,7 @@ RETURNS TABLE (
   unique_visitors  bigint
 )
 LANGUAGE sql SECURITY DEFINER STABLE
+SET search_path = analytics
 AS $$
   SELECT
     COALESCE(NULLIF(referrer, ''), '(direct)') AS referrer,

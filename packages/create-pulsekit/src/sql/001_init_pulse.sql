@@ -5,7 +5,8 @@ alter role authenticator set pgrst.db_schemas = 'public, graphql_public, analyti
 
 -- Schema-level access
 grant usage on schema analytics to anon, authenticated, service_role;
-alter default privileges in schema analytics grant all on tables to anon, authenticated, service_role;
+alter default privileges in schema analytics grant select on tables to authenticated;
+alter default privileges in schema analytics grant all on tables to service_role;
 
 create table if not exists analytics.pulse_events (
   id bigserial primary key,
@@ -51,8 +52,16 @@ create table if not exists analytics.pulse_aggregates (
 );
 
 -- Grant table-level access (must be after table creation)
-grant all on all tables in schema analytics to anon, authenticated, service_role;
-grant all on all sequences in schema analytics to anon, authenticated, service_role;
+-- anon: INSERT only on pulse_events (used by the ingestion API route)
+grant insert on analytics.pulse_events to anon;
+grant usage on sequence analytics.pulse_events_id_seq to anon;
+
+-- authenticated: read-only on all analytics tables
+grant select on all tables in schema analytics to authenticated;
+
+-- service_role: full access (admin operations, consolidation, etc.)
+grant all on all tables in schema analytics to service_role;
+grant all on all sequences in schema analytics to service_role;
 
 alter table analytics.pulse_aggregates enable row level security;
 
@@ -62,13 +71,6 @@ create policy "Allow authenticated select on pulse_aggregates"
     on analytics.pulse_aggregates
     for select
     to authenticated
-    using (true);
-
-drop policy if exists "Allow anon select on pulse_aggregates" on analytics.pulse_aggregates;
-create policy "Allow anon select on pulse_aggregates"
-    on analytics.pulse_aggregates
-    for select
-    to anon
     using (true);
 
 -- Reload PostgREST config and schema cache (must be last)

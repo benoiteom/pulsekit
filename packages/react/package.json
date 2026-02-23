@@ -1,6 +1,6 @@
 {
   "name": "@pulsekit/react",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "React Server Components for the PulseKit analytics dashboard",
   "keywords": ["analytics", "react", "dashboard", "supabase", "recharts", "pulsekit"],
   "license": "MIT",

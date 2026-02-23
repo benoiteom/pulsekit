@@ -9,6 +9,7 @@ CREATE OR REPLACE FUNCTION analytics.pulse_consolidate_and_cleanup(
 RETURNS TABLE (rows_consolidated bigint, rows_deleted bigint)
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = analytics
 AS $$
 DECLARE
   v_cutoff timestamptz;
@@ -70,6 +71,7 @@ RETURNS TABLE (
 LANGUAGE sql
 SECURITY DEFINER
 STABLE
+SET search_path = analytics
 AS $$
   WITH
     -- Find the earliest raw pageview date for this site

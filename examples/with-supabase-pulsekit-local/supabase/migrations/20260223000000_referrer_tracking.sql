@@ -1,4 +1,3 @@
--- 009_referrer_tracking.sql
 -- Add referrer column
 ALTER TABLE analytics.pulse_events
   ADD COLUMN IF NOT EXISTS referrer text;
@@ -20,6 +19,7 @@ RETURNS TABLE (
   unique_visitors  bigint
 )
 LANGUAGE sql SECURITY DEFINER STABLE
+SET search_path = analytics
 AS $$
   SELECT
     COALESCE(NULLIF(referrer, ''), '(direct)') AS referrer,
@@ -36,4 +36,4 @@ AS $$
 $$;
 
 GRANT EXECUTE ON FUNCTION analytics.pulse_referrer_stats(text, date, date)
-  TO authenticated, service_role;
+  TO anon, authenticated, service_role;

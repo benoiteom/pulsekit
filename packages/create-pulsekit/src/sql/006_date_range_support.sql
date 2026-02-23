@@ -20,6 +20,7 @@ RETURNS TABLE (
 LANGUAGE sql
 SECURITY DEFINER
 STABLE
+SET search_path = analytics
 AS $$
   SELECT
     date_trunc('day', created_at AT TIME ZONE p_timezone)::date AS date,
@@ -56,6 +57,7 @@ RETURNS TABLE (
 LANGUAGE sql
 SECURITY DEFINER
 STABLE
+SET search_path = analytics
 AS $$
   SELECT
     country,
@@ -92,6 +94,7 @@ RETURNS TABLE (
   sample_count bigint
 )
 LANGUAGE sql SECURITY DEFINER STABLE
+SET search_path = analytics
 AS $$
   WITH vitals_raw AS (
     SELECT
@@ -149,6 +152,7 @@ RETURNS TABLE (
   sample_meta   jsonb
 )
 LANGUAGE sql SECURITY DEFINER STABLE
+SET search_path = analytics
 AS $$
   WITH ranked AS (
     SELECT

@@ -1,4 +1,3 @@
--- 001_init_pulse.sql
 create schema if not exists analytics;
 
 -- Add analytics to the schemas exposed by PostgREST
@@ -6,7 +5,8 @@ alter role authenticator set pgrst.db_schemas = 'public, graphql_public, analyti
 
 -- Schema-level access
 grant usage on schema analytics to anon, authenticated, service_role;
-alter default privileges in schema analytics grant all on tables to anon, authenticated, service_role;
+alter default privileges in schema analytics grant select on tables to authenticated;
+alter default privileges in schema analytics grant all on tables to service_role;
 
 create table if not exists analytics.pulse_events (
   id bigserial primary key,
@@ -52,8 +52,16 @@ create table if not exists analytics.pulse_aggregates (
 );
 
 -- Grant table-level access (must be after table creation)
-grant all on all tables in schema analytics to anon, authenticated, service_role;
-grant all on all sequences in schema analytics to anon, authenticated, service_role;
+-- anon: INSERT only on pulse_events (used by the ingestion API route)
+grant insert on analytics.pulse_events to anon;
+grant usage on sequence analytics.pulse_events_id_seq to anon;
+
+-- authenticated: read-only on all analytics tables
+grant select on all tables in schema analytics to authenticated;
+
+-- service_role: full access (admin operations, consolidation, etc.)
+grant all on all tables in schema analytics to service_role;
+grant all on all sequences in schema analytics to service_role;
 
 alter table analytics.pulse_aggregates enable row level security;
 
@@ -65,24 +73,17 @@ create policy "Allow authenticated select on pulse_aggregates"
     to authenticated
     using (true);
 
-drop policy if exists "Allow anon select on pulse_aggregates" on analytics.pulse_aggregates;
-create policy "Allow anon select on pulse_aggregates"
-    on analytics.pulse_aggregates
-    for select
-    to anon
-    using (true);
-
 -- Reload PostgREST config and schema cache (must be last)
 notify pgrst, 'reload config';
 notify pgrst, 'reload schema';
 
 
--- 002_aggregation_function.sql
 -- Aggregation function: rolls up raw events into daily aggregates
 create or replace function analytics.pulse_refresh_aggregates(days_back integer default 7)
 returns void
 language sql
 security definer
+set search_path = analytics
 as $$
   insert into analytics.pulse_aggregates (date, site_id, path, total_views, unique_visitors)
   select
@@ -105,7 +106,6 @@ $$;
 grant execute on function analytics.pulse_refresh_aggregates(integer) to anon, authenticated, service_role;
 
 
--- 003_geo_and_timezone.sql
 -- Add geo columns to pulse_events
 alter table analytics.pulse_events
   add column if not exists country text,
@@ -131,6 +131,7 @@ returns table (
 language sql
 security definer
 stable
+set search_path = analytics
 as $$
   select
     date_trunc('day', created_at at time zone p_timezone)::date as date,
@@ -165,6 +166,7 @@ returns table (
 language sql
 security definer
 stable
+set search_path = analytics
 as $$
   select
     country,
@@ -186,7 +188,6 @@ grant execute on function analytics.pulse_location_stats(text, integer)
 
 
 -- 004_web_vitals.sql
--- 004_web_vitals.sql
 -- Partial index + RPC for Web Vitals p75 aggregation
 
 -- Partial index: only covers vitals events, stays small
@@ -206,6 +207,7 @@ RETURNS TABLE (
   sample_count BIGINT
 )
 LANGUAGE sql SECURITY DEFINER STABLE
+SET search_path = analytics
 AS $$
   WITH vitals_raw AS (
     SELECT
@@ -245,7 +247,6 @@ GRANT EXECUTE ON FUNCTION analytics.pulse_vitals_stats(TEXT, INT)
 
 
 -- 005_error_tracking.sql
--- 005_error_tracking.sql
 -- Fix existing RPCs to filter by event_type = 'pageview', add error tracking
 
 -- ── Fix pulse_refresh_aggregates: only aggregate pageview events ──────
@@ -253,6 +254,7 @@ CREATE OR REPLACE FUNCTION analytics.pulse_refresh_aggregates(days_back integer 
 RETURNS void
 LANGUAGE sql
 SECURITY DEFINER
+SET search_path = analytics
 AS $$
   INSERT INTO analytics.pulse_aggregates (date, site_id, path, total_views, unique_visitors)
   SELECT
@@ -286,6 +288,7 @@ RETURNS TABLE (
 LANGUAGE sql
 SECURITY DEFINER
 STABLE
+SET search_path = analytics
 AS $$
   SELECT
     date_trunc('day', created_at AT TIME ZONE p_timezone)::date AS date,
@@ -315,6 +318,7 @@ RETURNS TABLE (
 LANGUAGE sql
 SECURITY DEFINER
 STABLE
+SET search_path = analytics
 AS $$
   SELECT
     country,
@@ -353,6 +357,7 @@ RETURNS TABLE (
   sample_meta  JSONB
 )
 LANGUAGE sql SECURITY DEFINER STABLE
+SET search_path = analytics
 AS $$
   WITH ranked AS (
     SELECT
@@ -381,7 +386,6 @@ GRANT EXECUTE ON FUNCTION analytics.pulse_error_stats(TEXT, INT)
 
 
 -- 006_date_range_support.sql
--- 006_date_range_support.sql
 -- Replace p_days_back with p_start_date / p_end_date date range params.
 -- Both default to NULL → falls back to last 7 days when not provided.
 
@@ -403,6 +407,7 @@ RETURNS TABLE (
 LANGUAGE sql
 SECURITY DEFINER
 STABLE
+SET search_path = analytics
 AS $$
   SELECT
     date_trunc('day', created_at AT TIME ZONE p_timezone)::date AS date,
@@ -439,6 +444,7 @@ RETURNS TABLE (
 LANGUAGE sql
 SECURITY DEFINER
 STABLE
+SET search_path = analytics
 AS $$
   SELECT
     country,
@@ -475,6 +481,7 @@ RETURNS TABLE (
   sample_count bigint
 )
 LANGUAGE sql SECURITY DEFINER STABLE
+SET search_path = analytics
 AS $$
   WITH vitals_raw AS (
     SELECT
@@ -532,6 +539,7 @@ RETURNS TABLE (
   sample_meta   jsonb
 )
 LANGUAGE sql SECURITY DEFINER STABLE
+SET search_path = analytics
 AS $$
   WITH ranked AS (
     SELECT
@@ -560,7 +568,6 @@ GRANT EXECUTE ON FUNCTION analytics.pulse_error_stats(text, date, date)
 
 
 -- 007_data_lifecycle.sql
--- 007_data_lifecycle.sql
 -- Automatic data consolidation & cleanup.
 -- Rolls pageview counts older than retention_days into pulse_aggregates,
 -- then deletes all old raw events (all event types).
@@ -571,6 +578,7 @@ CREATE OR REPLACE FUNCTION analytics.pulse_consolidate_and_cleanup(
 RETURNS TABLE (rows_consolidated bigint, rows_deleted bigint)
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = analytics
 AS $$
 DECLARE
   v_cutoff timestamptz;
@@ -632,6 +640,7 @@ RETURNS TABLE (
 LANGUAGE sql
 SECURITY DEFINER
 STABLE
+SET search_path = analytics
 AS $$
   WITH
     -- Find the earliest raw pageview date for this site
@@ -677,7 +686,6 @@ GRANT EXECUTE ON FUNCTION analytics.pulse_stats_by_timezone(text, text, date, da
   TO anon, authenticated, service_role;
 
 
--- 008_security_hardening.sql
 -- 008_security_hardening.sql
 -- Tighten grants and RLS policies for production security.
 -- Replaces the overly broad GRANT ALL from 001_init_pulse.sql with
@@ -740,7 +748,6 @@ NOTIFY pgrst, 'reload config';
 NOTIFY pgrst, 'reload schema';
 
 
--- 009_referrer_tracking.sql
 -- Add referrer column
 ALTER TABLE analytics.pulse_events
   ADD COLUMN IF NOT EXISTS referrer text;
@@ -762,6 +769,7 @@ RETURNS TABLE (
   unique_visitors  bigint
 )
 LANGUAGE sql SECURITY DEFINER STABLE
+SET search_path = analytics
 AS $$
   SELECT
     COALESCE(NULLIF(referrer, ''), '(direct)') AS referrer,
@@ -778,4 +786,4 @@ AS $$
 $$;
 
 GRANT EXECUTE ON FUNCTION analytics.pulse_referrer_stats(text, date, date)
-  TO authenticated, service_role;
+  TO anon, authenticated, service_role;

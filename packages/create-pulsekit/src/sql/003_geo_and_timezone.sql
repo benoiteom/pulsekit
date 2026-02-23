@@ -23,6 +23,7 @@ returns table (
 language sql
 security definer
 stable
+set search_path = analytics
 as $$
   select
     date_trunc('day', created_at at time zone p_timezone)::date as date,
@@ -57,6 +58,7 @@ returns table (
 language sql
 security definer
 stable
+set search_path = analytics
 as $$
   select
     country,

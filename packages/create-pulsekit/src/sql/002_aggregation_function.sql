@@ -3,6 +3,7 @@ create or replace function analytics.pulse_refresh_aggregates(days_back integer 
 returns void
 language sql
 security definer
+set search_path = analytics
 as $$
   insert into analytics.pulse_aggregates (date, site_id, path, total_views, unique_visitors)
   select

@@ -6,6 +6,7 @@ CREATE OR REPLACE FUNCTION analytics.pulse_refresh_aggregates(days_back integer 
 RETURNS void
 LANGUAGE sql
 SECURITY DEFINER
+SET search_path = analytics
 AS $$
   INSERT INTO analytics.pulse_aggregates (date, site_id, path, total_views, unique_visitors)
   SELECT
@@ -39,6 +40,7 @@ RETURNS TABLE (
 LANGUAGE sql
 SECURITY DEFINER
 STABLE
+SET search_path = analytics
 AS $$
   SELECT
     date_trunc('day', created_at AT TIME ZONE p_timezone)::date AS date,
@@ -68,6 +70,7 @@ RETURNS TABLE (
 LANGUAGE sql
 SECURITY DEFINER
 STABLE
+SET search_path = analytics
 AS $$
   SELECT
     country,
@@ -106,6 +109,7 @@ RETURNS TABLE (
   sample_meta  JSONB
 )
 LANGUAGE sql SECURITY DEFINER STABLE
+SET search_path = analytics
 AS $$
   WITH ranked AS (
     SELECT
