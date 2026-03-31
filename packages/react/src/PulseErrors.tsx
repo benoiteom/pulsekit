@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import type { ErrorsOverview } from "@pulsekit/core";
 
 const PAGE_SIZE = 10;
@@ -24,7 +24,8 @@ function TypeBadge({ type }: { type: string }) {
   );
 }
 
-function formatRelativeTime(dateStr: string, now: number): string {
+function formatRelativeTime(dateStr: string): string {
+  const now = Date.now();
   const then = new Date(dateStr).getTime();
   const diffMs = now - then;
   const diffMin = Math.floor(diffMs / 60000);
@@ -47,8 +48,6 @@ function KpiChip({ label, value, color }: { label: string; value: number; color:
 
 export function PulseErrors({ data }: PulseErrorsProps) {
   const [page, setPage] = useState(0);
-  const [now, setNow] = useState<number | null>(null);
-  useEffect(() => { setNow(Date.now()); }, []);
 
   if (data.totalErrorCount === 0) {
     return (
@@ -95,8 +94,8 @@ export function PulseErrors({ data }: PulseErrorsProps) {
               <td className="pulse-td pulse-td--mono">{err.path}</td>
               <td className="pulse-td pulse-td--right">{err.totalCount}</td>
               <td className="pulse-td pulse-td--right">{err.sessionCount}</td>
-              <td className="pulse-td pulse-td--right pulse-td--nowrap">
-                {now !== null ? formatRelativeTime(err.lastSeen, now) : ""}
+              <td className="pulse-td pulse-td--right pulse-td--nowrap" suppressHydrationWarning>
+                {formatRelativeTime(err.lastSeen)}
               </td>
             </tr>
           ))}

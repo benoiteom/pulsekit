@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import type { EventsOverview } from "@pulsekit/core";
 
 const PAGE_SIZE = 50;
@@ -46,17 +46,7 @@ function TypeBadge({ type }: { type: string }) {
   );
 }
 
-function formatTimeUTC(dateStr: string): string {
-  const d = new Date(dateStr);
-  const month = d.toLocaleString("en-US", { month: "short", timeZone: "UTC" });
-  const day = d.getUTCDate();
-  const hours = d.getUTCHours().toString().padStart(2, "0");
-  const minutes = d.getUTCMinutes().toString().padStart(2, "0");
-  const seconds = d.getUTCSeconds().toString().padStart(2, "0");
-  return `${month} ${day} ${hours}:${minutes}:${seconds}`;
-}
-
-function formatTimeLocal(dateStr: string): string {
+function formatTime(dateStr: string): string {
   const d = new Date(dateStr);
   const month = d.toLocaleString("en-US", { month: "short" });
   const day = d.getDate();
@@ -99,8 +89,6 @@ function navigate(filters: PulseEventsFilters) {
 }
 
 export function PulseEvents({ data, filters }: PulseEventsProps) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
   const [localType, setLocalType] = useState(filters.eventType);
   const [localPath, setLocalPath] = useState(filters.path);
   const [localSession, setLocalSession] = useState(filters.sessionId);
@@ -180,8 +168,8 @@ export function PulseEvents({ data, filters }: PulseEventsProps) {
             <tbody>
               {data.events.map((event) => (
                 <tr key={event.id} className="pulse-table-row">
-                  <td className="pulse-td pulse-td--nowrap" title={event.createdAt}>
-                    {mounted ? formatTimeLocal(event.createdAt) : formatTimeUTC(event.createdAt)}
+                  <td className="pulse-td pulse-td--nowrap" title={event.createdAt} suppressHydrationWarning>
+                    {formatTime(event.createdAt)}
                   </td>
                   <td className="pulse-td">
                     <TypeBadge type={event.eventType} />
