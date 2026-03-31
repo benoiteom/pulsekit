@@ -32,4 +32,10 @@ export {
   type AggregatesOverview,
   type ReferrerStat,
   type ReferrersOverview,
+  getPulseEvents,
+  type PulseEvent,
+  type EventsOverview,
+  getPulseSystemStats,
+  type SystemStat,
+  type SystemOverview,
 } from "./queries";

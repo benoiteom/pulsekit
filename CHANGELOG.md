@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-03-31
+
+### Added
+
+- **@pulsekit/next**: `withPulseAuth` now accepts `CRON_SECRET` env var as a valid Bearer token, enabling Vercel Cron to authenticate automatically
+- **create-pulsekit**: Scaffold `vercel.json` with cron entries for automatic aggregation (every 6 hours) and data cleanup (nightly at 3am UTC)
+- **create-pulsekit**: Refresh and consolidate routes now export GET alongside POST for Vercel Cron compatibility
+- **@pulsekit/core**: Add `pulse_referrer_aggregates` table — referrer stats are now archived during consolidation, so historical referrer data survives the raw-event retention window (`010_fix_aggregation.sql`)
+- **@pulsekit/core**: Add `pulse_location_aggregates` table — location/map data is now archived during consolidation, so historical geo data survives the raw-event retention window (`011_location_aggregation.sql`)
+- **@pulsekit/react**: Tabbed dashboard layout — `PulseDashboard` now renders five tabs (Traffic, Vitals, Errors, Events, System) instead of a single vertical page. The date picker is scoped to the Traffic tab; Vitals and Errors tabs use a 7d/30d toggle appropriate for their raw-data retention window.
+- **@pulsekit/react**: New `PulseTabs` client component — URL-driven tab navigation (`?tab=`) with instant client-side switching
+- **@pulsekit/react**: New `PulseTimeToggle` client component — 7d/30d range toggle for Vitals/Errors tabs (`?range=`)
+- **@pulsekit/react**: New `tab` and `range` props on `PulseDashboard` — `tab` controls the active tab, `range` controls the Vitals/Errors timeframe independently from the Traffic date picker
+- **@pulsekit/core**: New `pulse_events_list` and `pulse_events_count` SQL RPCs for paginated, filterable event browsing (`012_event_browser.sql`)
+- **@pulsekit/core**: New `getPulseEvents` query function and `PulseEvent`/`EventsOverview` types for fetching raw events with filters
+- **@pulsekit/react**: New `PulseEvents` client component — event browser with type/path/session filters, paginated table, and color-coded event type badges
+- **@pulsekit/react**: `PulseDashboard` Events tab now shows the full event browser instead of a placeholder; new props `eventType`, `eventPath`, `eventSession`, `eventPage` for filter state
+- **@pulsekit/core**: New `pulse_system_stats` SQL RPC for pipeline diagnostics — returns event counts by type, retention window, aggregation status, and session/path counts (`013_system_stats.sql`)
+- **@pulsekit/core**: New `getPulseSystemStats` query function and `SystemStat`/`SystemOverview` types
+- **@pulsekit/react**: New `PulseSystem` component — displays pipeline health, aggregation status, and configuration in the System tab
+- **@pulsekit/react**: `PulseDashboard` System tab now shows live diagnostics instead of a placeholder
+
+### Changed
+
+- **@pulsekit/react**: `PulseDashboard` no longer fetches or renders `getPulseAggregates` — the consolidated data table will return as part of the System tab in a future release
+- **@pulsekit/react**: Vitals and Errors data are now fetched using the `range` prop (7d/30d) instead of the Traffic `timeframe`, so they always query within the raw-event retention window
+
+### Fixed
+
+- **@pulsekit/core**: `pulse_refresh_aggregates` now uses `GREATEST()` on conflict instead of overwriting — previously a partial or repeated refresh could silently reduce an already-correct aggregate count (`010_fix_aggregation.sql`)
+- **@pulsekit/core**: `pulse_consolidate_and_cleanup` now archives referrer data into `pulse_referrer_aggregates` before deleting old raw events
+- **@pulsekit/core**: `pulse_referrer_stats` now unions raw events with `pulse_referrer_aggregates` for historical dates, matching the pattern of `pulse_stats_by_timezone`
+- **@pulsekit/core**: `pulse_location_stats` now unions raw events with `pulse_location_aggregates` for historical dates — previously location/map data was permanently lost after the 30-day retention window
+- **@pulsekit/core**: `pulse_consolidate_and_cleanup` now archives location data into `pulse_location_aggregates` before deleting old raw events
+- **@pulsekit/react**: Remove 30-day minimum date restriction from `PulseDateRangePicker` so users can select date ranges that include consolidated (aggregated) data older than 30 days
+- **create-pulsekit**, **examples**: Analytics page now reads `?from=` and `?to=` URL search params and passes them as the `timeframe` to `PulseDashboard` — previously the date picker updated the URL but the page always ignored it and queried with the hardcoded `"7d"` timeframe
+
 ## [1.1.1] - 2026-02-22
 
 ### Fixed

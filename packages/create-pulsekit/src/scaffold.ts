@@ -12,7 +12,7 @@ import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
 export const POST = createPulseHandler({
@@ -29,10 +29,12 @@ import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-export const POST = withPulseAuth(createRefreshHandler({ supabase }));
+const handler = withPulseAuth(createRefreshHandler({ supabase }));
+export const GET = handler;
+export const POST = handler;
 `;
 
   const consolidateRoute = `import { createConsolidateHandler, withPulseAuth } from "@pulsekit/next";
@@ -40,10 +42,12 @@ import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-export const POST = withPulseAuth(createConsolidateHandler({ supabase }));
+const handler = withPulseAuth(createConsolidateHandler({ supabase }));
+export const GET = handler;
+export const POST = handler;
 `;
 
   const authRoute = `import { createPulseAuthHandler } from "@pulsekit/next";
@@ -58,32 +62,65 @@ export const DELETE = handler;
 import { createClient } from "@supabase/supabase-js";
 import { PulseDashboard, PulseAuthGate } from "@pulsekit/react";
 import { getPulseTimezone } from "@pulsekit/next";
+import type { Timeframe } from "@pulsekit/core";
 import { Spinner } from "@/components/ui/spinner";
 import "@pulsekit/react/pulse.css";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-async function Dashboard() {
+async function Dashboard(props: {
+  timeframe: Timeframe;
+  range: "7d" | "30d";
+  tab: string;
+  eventType?: string;
+  eventPath?: string;
+  eventSession?: string;
+  eventPage?: number;
+}) {
   const timezone = await getPulseTimezone();
 
   return (
     <PulseDashboard
       supabase={supabase}
       siteId="default"
-      timeframe="7d"
       timezone={timezone}
+      {...props}
     />
   );
 }
 
-export default function AnalyticsPage() {
+export default async function AnalyticsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    from?: string;
+    to?: string;
+    tab?: string;
+    range?: string;
+    eventType?: string;
+    eventPath?: string;
+    eventSession?: string;
+    eventPage?: string;
+  }>;
+}) {
+  const params = await searchParams;
+  const timeframe: Timeframe = params.from && params.to ? { from: params.from, to: params.to } : "7d";
+
   return (
     <Suspense fallback={<div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", padding: "1.5rem" }}><Spinner style={{ width: 24, height: 24 }} /></div>}>
       <PulseAuthGate secret={process.env.PULSE_SECRET!}>
-        <Dashboard />
+        <Dashboard
+          timeframe={timeframe}
+          range={params.range === "30d" ? "30d" : "7d"}
+          tab={params.tab || "traffic"}
+          eventType={params.eventType}
+          eventPath={params.eventPath}
+          eventSession={params.eventSession}
+          eventPage={params.eventPage ? parseInt(params.eventPage, 10) : undefined}
+        />
       </PulseAuthGate>
     </Suspense>
   );
@@ -181,6 +218,25 @@ export { Spinner }
 
     fs.writeFileSync(fullPath, content, "utf8");
     console.log(`    Created: ${rel}`);
+  }
+
+  // Scaffold vercel.json with cron entries for automatic aggregation
+  const vercelJsonPath = path.join(cwd, "vercel.json");
+  if (fs.existsSync(vercelJsonPath)) {
+    console.log("    Skipped (already exists): vercel.json");
+  } else {
+    const vercelConfig = {
+      crons: [
+        { path: "/api/pulse/refresh-aggregates", schedule: "0 */6 * * *" },
+        { path: "/api/pulse/consolidate", schedule: "0 3 * * *" },
+      ],
+    };
+    fs.writeFileSync(
+      vercelJsonPath,
+      JSON.stringify(vercelConfig, null, 2) + "\n",
+      "utf8",
+    );
+    console.log("    Created: vercel.json (Vercel Cron for aggregation)");
   }
 
   console.log("");

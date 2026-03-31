@@ -11,9 +11,10 @@ type NextHandler = (
  *
  * Checks (in order):
  * 1. `pulse_auth` cookie — verified via HMAC token
- * 2. `Authorization: Bearer {secret}` header — direct comparison (for cron jobs)
+ * 2. `Authorization: Bearer` header — checked against `PULSE_SECRET`
+ * 3. `Authorization: Bearer` header — checked against `CRON_SECRET` (for Vercel Cron)
  *
- * Requires `PULSE_SECRET` to be set — returns 500 if missing.
+ * Requires `PULSE_SECRET` to be set — throws if missing.
  */
 export function withPulseAuth(handler: NextHandler): NextHandler {
   return async function authHandler(req: NextRequest, ctx?: unknown) {
@@ -37,6 +38,12 @@ export function withPulseAuth(handler: NextHandler): NextHandler {
     if (authHeader?.startsWith("Bearer ")) {
       const bearer = authHeader.slice(7);
       if (await timingSafeEqual(bearer, secret)) {
+        return handler(req, ctx);
+      }
+
+      // Also accept CRON_SECRET (set automatically by Vercel Cron)
+      const cronSecret = process.env.CRON_SECRET;
+      if (cronSecret && (await timingSafeEqual(bearer, cronSecret))) {
         return handler(req, ctx);
       }
     }

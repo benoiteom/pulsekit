@@ -14,6 +14,7 @@ function appendEnvExample(): void {
   const content = fs.readFileSync(envExamplePath, "utf8");
   const entries: { key: string; value: string }[] = [
     { key: "PULSE_SECRET", value: "" },
+    { key: "CRON_SECRET", value: "" },
     { key: "SUPABASE_SERVICE_ROLE_KEY", value: "" },
   ];
 
@@ -56,6 +57,7 @@ async function main() {
   console.log("       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<your-anon-key>");
   console.log("       SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>");
   console.log("       PULSE_SECRET=<a-random-string-at-least-16-chars>");
+  console.log("       CRON_SECRET=<a-random-string-for-cron-auth>");
   console.log("    2. Run the database migration:");
   console.log("       npx supabase link");
   console.log("       npx supabase db push");
@@ -63,7 +65,11 @@ async function main() {
   console.log("       allow the PulseKit paths through:");
   console.log('       !request.nextUrl.pathname.startsWith("/api/pulse")');
   console.log('       !request.nextUrl.pathname.startsWith("/admin/analytics")');
-  console.log("    4. Start your dev server and visit /admin/analytics\n");
+  console.log("    4. If deploying to Vercel, add CRON_SECRET to your project");
+  console.log("       environment variables to enable automatic aggregation.");
+  console.log("       Not on Vercel? Call the endpoints from any cron service");
+  console.log("       with the header: Authorization: Bearer <PULSE_SECRET>");
+  console.log("    5. Start your dev server and visit /admin/analytics\n");
 }
 
 main().catch((err) => {

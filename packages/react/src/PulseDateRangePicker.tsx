@@ -53,8 +53,6 @@ export function PulseDateRangePicker({ from, to }: PulseDateRangePickerProps) {
   }, [open, from, to]);
 
   const today = new Date();
-  const minDate = new Date();
-  minDate.setDate(today.getDate() - 30);
 
   function handleDayClick(day: Date) {
     if (activeField === "start") {
@@ -218,7 +216,7 @@ export function PulseDateRangePicker({ from, to }: PulseDateRangePickerProps) {
             selected={{ from: startDate, to: endDate }}
             onSelect={() => {}}
             onDayClick={handleDayClick}
-            disabled={[{ before: minDate }, { after: today }]}
+            disabled={[{ after: today }]}
             month={month}
             onMonthChange={setMonth}
             numberOfMonths={1}

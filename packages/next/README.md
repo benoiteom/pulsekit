@@ -50,6 +50,10 @@ export const POST = handler.POST;
 
 Creates a handler for data consolidation/aggregation tasks.
 
+### `withPulseAuth(handler)`
+
+Wraps a Next.js route handler with auth protection. Accepts a valid `pulse_auth` cookie or an `Authorization: Bearer` header checked against `PULSE_SECRET` and `CRON_SECRET` environment variables. The `CRON_SECRET` check enables Vercel Cron to authenticate automatically.
+
 ### `createPulseErrorReporter(config)`
 
 Creates an error reporter for capturing server-side errors and forwarding them to PulseKit.

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getPulseStats, getPulseVitals, getPulseErrors, getPulseReferrers } from "../queries";
+import { getPulseStats, getPulseVitals, getPulseErrors, getPulseReferrers, getPulseEvents, getPulseSystemStats } from "../queries";
 
 // Use custom timeframe objects to bypass dateRangeFromTimeframe date math
 const timeframe = { from: "2025-01-01", to: "2025-01-07" };
@@ -286,5 +286,195 @@ describe("getPulseReferrers", () => {
     await expect(
       getPulseReferrers({ supabase, siteId: "test", timeframe })
     ).rejects.toEqual({ message: "referrer fail" });
+  });
+});
+
+// ── getPulseEvents ──────────────────────────────────────────────────
+
+describe("getPulseEvents", () => {
+  it("maps fields from snake_case to camelCase", async () => {
+    const supabase = mockRpc({
+      pulse_events_list: {
+        data: [
+          { id: 1, event_type: "pageview", path: "/", session_id: "abc", referrer: "google.com", country: "US", city: "NYC", meta: null, created_at: "2025-01-02T12:00:00Z" },
+          { id: 2, event_type: "error", path: "/about", session_id: "def", referrer: null, country: null, city: null, meta: { stack: "err" }, created_at: "2025-01-01T08:00:00Z" },
+        ],
+        error: null,
+      },
+      pulse_events_count: { data: 42, error: null },
+    });
+
+    const result = await getPulseEvents({ supabase, siteId: "test", timeframe });
+
+    expect(result.events).toEqual([
+      { id: 1, eventType: "pageview", path: "/", sessionId: "abc", referrer: "google.com", country: "US", city: "NYC", meta: null, createdAt: "2025-01-02T12:00:00Z" },
+      { id: 2, eventType: "error", path: "/about", sessionId: "def", referrer: null, country: null, city: null, meta: { stack: "err" }, createdAt: "2025-01-01T08:00:00Z" },
+    ]);
+    expect(result.totalCount).toBe(42);
+  });
+
+  it("returns empty events when no data", async () => {
+    const supabase = mockRpc({
+      pulse_events_list: { data: [], error: null },
+      pulse_events_count: { data: 0, error: null },
+    });
+
+    const result = await getPulseEvents({ supabase, siteId: "test", timeframe });
+
+    expect(result).toEqual({ events: [], totalCount: 0 });
+  });
+
+  it("handles null data gracefully", async () => {
+    const supabase = mockRpc({
+      pulse_events_list: { data: null, error: null },
+      pulse_events_count: { data: null, error: null },
+    });
+
+    const result = await getPulseEvents({ supabase, siteId: "test", timeframe });
+
+    expect(result).toEqual({ events: [], totalCount: 0 });
+  });
+
+  it("passes filter params to RPC", async () => {
+    const rpcCalls: Record<string, unknown> = {};
+    const supabase = {
+      schema: () => ({
+        rpc: (name: string, params: unknown) => {
+          rpcCalls[name] = params;
+          return { data: name === "pulse_events_count" ? 0 : [], error: null };
+        },
+      }),
+    } as any;
+
+    await getPulseEvents({
+      supabase,
+      siteId: "my-site",
+      timeframe,
+      eventType: "error",
+      path: "/about",
+      sessionId: "sess-123",
+      limit: 25,
+      offset: 50,
+    });
+
+    expect(rpcCalls.pulse_events_list).toMatchObject({
+      p_site_id: "my-site",
+      p_event_type: "error",
+      p_path: "/about",
+      p_session_id: "sess-123",
+      p_limit: 25,
+      p_offset: 50,
+    });
+    expect(rpcCalls.pulse_events_count).toMatchObject({
+      p_site_id: "my-site",
+      p_event_type: "error",
+      p_path: "/about",
+      p_session_id: "sess-123",
+    });
+  });
+
+  it("sends null for empty filter strings", async () => {
+    const rpcCalls: Record<string, unknown> = {};
+    const supabase = {
+      schema: () => ({
+        rpc: (name: string, params: unknown) => {
+          rpcCalls[name] = params;
+          return { data: name === "pulse_events_count" ? 0 : [], error: null };
+        },
+      }),
+    } as any;
+
+    await getPulseEvents({ supabase, siteId: "test", timeframe, eventType: "", path: "", sessionId: "" });
+
+    expect(rpcCalls.pulse_events_list).toMatchObject({
+      p_event_type: null,
+      p_path: null,
+      p_session_id: null,
+    });
+  });
+
+  it("throws on list RPC error", async () => {
+    const supabase = mockRpc({
+      pulse_events_list: { data: null, error: { message: "list fail" } },
+      pulse_events_count: { data: 0, error: null },
+    });
+
+    await expect(
+      getPulseEvents({ supabase, siteId: "test", timeframe })
+    ).rejects.toEqual({ message: "list fail" });
+  });
+
+  it("throws on count RPC error", async () => {
+    const supabase = mockRpc({
+      pulse_events_list: { data: [], error: null },
+      pulse_events_count: { data: null, error: { message: "count fail" } },
+    });
+
+    await expect(
+      getPulseEvents({ supabase, siteId: "test", timeframe })
+    ).rejects.toEqual({ message: "count fail" });
+  });
+});
+
+// ── getPulseSystemStats ────────────────────────────────────────────
+
+describe("getPulseSystemStats", () => {
+  it("maps stat_key/stat_value to key/value", async () => {
+    const supabase = mockRpc({
+      pulse_system_stats: {
+        data: [
+          { stat_key: "total_events", stat_value: "500" },
+          { stat_key: "pageview_count", stat_value: "300" },
+        ],
+        error: null,
+      },
+    });
+
+    const result = await getPulseSystemStats({ supabase, siteId: "test" });
+
+    expect(result.stats).toEqual([
+      { key: "total_events", value: "500" },
+      { key: "pageview_count", value: "300" },
+    ]);
+  });
+
+  it("returns empty stats when no data", async () => {
+    const supabase = mockRpc({
+      pulse_system_stats: { data: [], error: null },
+    });
+
+    const result = await getPulseSystemStats({ supabase, siteId: "test" });
+    expect(result).toEqual({ stats: [] });
+  });
+
+  it("handles null data gracefully", async () => {
+    const supabase = mockRpc({
+      pulse_system_stats: { data: null, error: null },
+    });
+
+    const result = await getPulseSystemStats({ supabase, siteId: "test" });
+    expect(result).toEqual({ stats: [] });
+  });
+
+  it("coerces null stat_value to empty string", async () => {
+    const supabase = mockRpc({
+      pulse_system_stats: {
+        data: [{ stat_key: "oldest_event", stat_value: null }],
+        error: null,
+      },
+    });
+
+    const result = await getPulseSystemStats({ supabase, siteId: "test" });
+    expect(result.stats[0].value).toBe("");
+  });
+
+  it("throws on RPC error", async () => {
+    const supabase = mockRpc({
+      pulse_system_stats: { data: null, error: { message: "system fail" } },
+    });
+
+    await expect(
+      getPulseSystemStats({ supabase, siteId: "test" })
+    ).rejects.toEqual({ message: "system fail" });
   });
 });

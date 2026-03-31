@@ -443,3 +443,132 @@ export async function getPulseErrors(opts: {
     totalServerErrors,
   };
 }
+
+// ── Event browser types ────────────────────────────────────────────
+
+export interface PulseEvent {
+  id: number;
+  eventType: string;
+  path: string;
+  sessionId: string;
+  referrer: string | null;
+  country: string | null;
+  city: string | null;
+  meta: Record<string, unknown> | null;
+  createdAt: string;
+}
+
+export interface EventsOverview {
+  events: PulseEvent[];
+  totalCount: number;
+}
+
+// ── Event browser query ────────────────────────────────────────────
+
+/**
+ * Fetch a paginated list of raw events for the Events tab.
+ * Supports filtering by event type, path, and session ID.
+ */
+export async function getPulseEvents(opts: {
+  supabase: SupabaseClient;
+  siteId: string;
+  timeframe: Timeframe;
+  timezone?: string;
+  eventType?: string;
+  path?: string;
+  sessionId?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<EventsOverview> {
+  const { supabase, siteId, timeframe, timezone = "UTC", eventType, path, sessionId, limit = 50, offset = 0 } = opts;
+  const { startDate, endDate } = dateRangeFromTimeframe(timeframe, timezone);
+
+  const rpcParams: Record<string, unknown> = {
+    p_site_id: siteId,
+    p_start_date: startDate,
+    p_end_date: endDate,
+    p_event_type: eventType || null,
+    p_path: path || null,
+    p_session_id: sessionId || null,
+  };
+
+  const [listResult, countResult] = await Promise.all([
+    supabase.schema("analytics").rpc("pulse_events_list", {
+      ...rpcParams,
+      p_limit: limit,
+      p_offset: offset,
+    }),
+    supabase.schema("analytics").rpc("pulse_events_count", rpcParams),
+  ]);
+
+  if (listResult.error) throw listResult.error;
+  if (countResult.error) throw countResult.error;
+
+  const events: PulseEvent[] = (listResult.data ?? []).map(
+    (row: {
+      id: number;
+      event_type: string;
+      path: string;
+      session_id: string;
+      referrer: string | null;
+      country: string | null;
+      city: string | null;
+      meta: Record<string, unknown> | null;
+      created_at: string;
+    }) => ({
+      id: Number(row.id),
+      eventType: row.event_type,
+      path: row.path ?? "",
+      sessionId: row.session_id ?? "",
+      referrer: row.referrer ?? null,
+      country: row.country ?? null,
+      city: row.city ?? null,
+      meta: row.meta ?? null,
+      createdAt: row.created_at,
+    })
+  );
+
+  // pulse_events_count returns a single bigint value
+  const totalCount = Number(countResult.data ?? 0);
+
+  return { events, totalCount };
+}
+
+// ── System stats types ────────────────────────────────────────────
+
+export interface SystemStat {
+  key: string;
+  value: string;
+}
+
+export interface SystemOverview {
+  stats: SystemStat[];
+}
+
+// ── System stats query ────────────────────────────────────────────
+
+/**
+ * Fetch pipeline diagnostics for the System tab.
+ * Returns key-value pairs about event counts, aggregate status, etc.
+ */
+export async function getPulseSystemStats(opts: {
+  supabase: SupabaseClient;
+  siteId: string;
+}): Promise<SystemOverview> {
+  const { supabase, siteId } = opts;
+
+  const { data, error } = await supabase
+    .schema("analytics")
+    .rpc("pulse_system_stats", { p_site_id: siteId });
+
+  if (error) throw error;
+
+  const stats: SystemStat[] = (data ?? []).map(
+    (row: { stat_key: string; stat_value: string }) => ({
+      key: row.stat_key,
+      value: row.stat_value ?? "",
+    })
+  );
+
+  return { stats };
+}

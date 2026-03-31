@@ -279,6 +279,213 @@
   cursor: default;
 }
 
+/* ── Toolbar (logo + tabs + actions in one row) ────────────────── */
+
+.pulse-dashboard-toolbar {
+  display: flex;
+  align-items: stretch;
+  gap: 1rem;
+  border-bottom: 1px solid var(--pulse-border);
+  margin-bottom: 1.5rem;
+}
+
+.pulse-dashboard-toolbar .pulse-dashboard-logo {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pulse-dashboard-toolbar .pulse-dashboard-actions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Small screens: wrap tabs to their own row */
+@media (max-width: 768px) {
+  .pulse-dashboard-toolbar {
+    flex-wrap: wrap;
+    row-gap: 0;
+  }
+
+  .pulse-dashboard-toolbar .pulse-dashboard-actions {
+    order: 0;
+    margin-left: auto;
+  }
+
+  .pulse-dashboard-toolbar .pulse-tabs {
+    order: 1;
+    flex-basis: 100%;
+  }
+}
+
+/* ── Tabs ───────────────────────────────────────────────────────── */
+
+.pulse-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--pulse-border);
+  margin-bottom: 1.5rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.pulse-dashboard-toolbar .pulse-tabs {
+  flex: 1;
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.pulse-tab {
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--pulse-fg-muted);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.pulse-dashboard-toolbar .pulse-tab {
+  margin-bottom: -1px;
+}
+
+.pulse-tab:hover {
+  color: var(--pulse-fg);
+}
+
+.pulse-tab--active {
+  color: var(--pulse-brand);
+  border-bottom-color: var(--pulse-brand);
+}
+
+.pulse-tab-panel {
+  min-height: 200px;
+}
+
+/* ── Time Toggle ────────────────────────────────────────────────── */
+
+.pulse-time-toggle {
+  display: inline-flex;
+  border-radius: var(--pulse-radius);
+  border: 1px solid var(--pulse-border);
+  overflow: hidden;
+}
+
+.pulse-time-toggle-btn {
+  padding: 6px 14px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  background: transparent;
+  color: var(--pulse-fg-muted);
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pulse-time-toggle-btn:not(:last-child) {
+  border-right: 1px solid var(--pulse-border);
+}
+
+.pulse-time-toggle-btn:hover:not(.pulse-time-toggle-btn--active) {
+  color: var(--pulse-fg);
+  background: var(--pulse-kpi-bg);
+}
+
+.pulse-time-toggle-btn--active {
+  background: var(--pulse-brand);
+  color: #fff;
+}
+
+/* ── Tab header bar (controls row within a tab) ─────────────────── */
+
+.pulse-tab-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+/* ── Event Browser ──────────────────────────────────────────────── */
+
+.pulse-events-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  align-items: center;
+}
+
+.pulse-events-select,
+.pulse-events-input {
+  padding: 6px 10px;
+  font-size: 0.8125rem;
+  border-radius: var(--pulse-radius);
+  border: 1px solid var(--pulse-border);
+  background: transparent;
+  color: var(--pulse-fg);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.pulse-events-select:focus,
+.pulse-events-input:focus {
+  border-color: var(--pulse-brand);
+}
+
+.pulse-events-select {
+  min-width: 120px;
+  cursor: pointer;
+}
+
+.pulse-events-input {
+  min-width: 140px;
+  flex: 1;
+}
+
+.pulse-events-input::placeholder {
+  color: var(--pulse-fg-muted);
+}
+
+.pulse-events-apply {
+  padding: 6px 14px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border-radius: var(--pulse-radius);
+  border: 1px solid var(--pulse-brand);
+  background: var(--pulse-brand);
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pulse-events-apply:hover {
+  background: var(--pulse-brand-light);
+  border-color: var(--pulse-brand-light);
+}
+
+.pulse-events-clear {
+  padding: 6px 14px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border-radius: var(--pulse-radius);
+  border: 1px solid var(--pulse-border);
+  background: transparent;
+  color: var(--pulse-fg-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pulse-events-clear:hover {
+  border-color: var(--pulse-fg-muted);
+  color: var(--pulse-fg);
+}
+
 /* ── Layout (PulseDashboard) ─────────────────────────────────────── */
 
 .pulse-dashboard {
@@ -563,4 +770,52 @@
 
 .pulse-font-medium {
   font-weight: 500;
+}
+
+/* ── System tab ─────────────────────────────────────────────────── */
+
+.pulse-system-breakdown {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.pulse-system-small-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  border: 1px solid var(--pulse-border);
+  background: var(--pulse-bg);
+}
+
+.pulse-system-small-chip-label {
+  color: var(--pulse-fg-muted);
+}
+
+.pulse-system-small-chip-value {
+  font-weight: 600;
+  color: var(--pulse-fg);
+}
+
+.pulse-system-agg-detail {
+  margin-top: 0.75rem;
+}
+
+.pulse-system-agg-range {
+  font-size: 0.8125rem;
+  color: var(--pulse-fg-muted);
+  margin: 0;
+}
+
+.pulse-system-agg-warn {
+  font-size: 0.8125rem;
+  color: var(--pulse-vital-warn-fg);
+  background: var(--pulse-vital-warn-bg);
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--pulse-radius);
+  margin: 0.5rem 0 0 0;
 }

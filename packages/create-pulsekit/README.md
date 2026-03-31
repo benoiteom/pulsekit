@@ -20,23 +20,28 @@ npx create-pulsekit
 2. **Validates** that you're in a Next.js project
 3. **Installs** `@pulsekit/core`, `@pulsekit/next`, and `@pulsekit/react`
 4. **Scaffolds** the analytics dashboard page and API routes
-5. **Injects** the `<PulseTracker />` component into your root layout
-6. **Injects** the error instrumentation for server-side error tracking
-7. **Writes** the Supabase SQL migration file
+5. **Scaffolds** a `vercel.json` with cron jobs for automatic data aggregation and cleanup
+6. **Injects** the `<PulseTracker />` component into your root layout
+7. **Injects** the error instrumentation for server-side error tracking
+8. **Writes** the Supabase SQL migration file
 
 ## After Setup
 
-1. Add your Supabase credentials to `.env.local`:
+1. Add your environment variables to `.env.local`:
    ```
    NEXT_PUBLIC_SUPABASE_URL=<your-supabase-url>
    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<your-anon-key>
+   SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
+   PULSE_SECRET=<a-secret-at-least-16-characters>
+   CRON_SECRET=<a-random-string-for-cron-auth>
    ```
 2. Link and push the database migration:
    ```bash
    npx supabase link
    npx supabase db push
    ```
-3. Start your dev server and visit `/admin/analytics`
+3. If deploying to Vercel, add `CRON_SECRET` to your project environment variables to enable automatic data aggregation and cleanup
+4. Start your dev server and visit `/admin/analytics`
 
 ## License
 

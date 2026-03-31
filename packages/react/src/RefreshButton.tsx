@@ -60,7 +60,6 @@ export function RefreshButton({
           strokeLinejoin="round"
         />
       </svg>
-      {loading ? "Refreshing\u2026" : "Refresh data"}
     </button>
   );
 }

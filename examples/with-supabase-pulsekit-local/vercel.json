@@ -1,0 +1,6 @@
+{
+  "crons": [
+    { "path": "/api/pulse/refresh-aggregates", "schedule": "0 */6 * * *" },
+    { "path": "/api/pulse/consolidate", "schedule": "0 3 * * *" }
+  ]
+}

@@ -30,11 +30,15 @@ dashboard page, set up error reporting, and write the Supabase migration. After 
    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
    SUPABASE_SERVICE_ROLE_KEY=
    PULSE_SECRET=          # minimum 16 characters
+   CRON_SECRET=           # any random string, used by Vercel Cron
 
 2. Push the database migration:
    npx supabase link && npx supabase db push
 
 3. If the project has middleware that protects routes, allow /api/pulse and /admin/analytics through (often found in lib/supabase/proxy.ts for a Next.js + Supabase project).
+
+4. If deploying to Vercel, add CRON_SECRET to your project environment variables to
+   enable automatic data aggregation and cleanup (configured in vercel.json).
 ```
 
 ## Table of Contents
@@ -46,6 +50,7 @@ dashboard page, set up error reporting, and write the Supabase migration. After 
 - [Authentication](#authentication)
 - [Error Tracking](#error-tracking)
 - [Data Lifecycle](#data-lifecycle)
+  - [Scheduling](#scheduling)
 - [Geolocation](#geolocation)
 - [Theming](#theming)
 - [Configuration Reference](#configuration-reference)
@@ -72,13 +77,15 @@ After running, complete the setup:
    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<your-anon-key>
    SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
    PULSE_SECRET=<a-secret-at-least-16-characters>
+   CRON_SECRET=<a-random-string-for-cron-auth>
    ```
 2. Push the database migration:
    ```bash
    npx supabase link
    npx supabase db push
    ```
-3. Start your dev server and visit `/admin/analytics`
+3. If deploying to Vercel, add `CRON_SECRET` to your project environment variables — see [Scheduling](#scheduling)
+4. Start your dev server and visit `/admin/analytics`
 
 ## Packages
 
@@ -139,20 +146,21 @@ export const POST = handler;
 export const DELETE = handler;
 ```
 
-The refresh-aggregates and consolidate routes power the [data lifecycle](#data-lifecycle):
+The refresh-aggregates and consolidate routes power the [data lifecycle](#data-lifecycle). They export both `GET` (for Vercel Cron) and `POST` (for manual triggers and the dashboard refresh button):
 
 ```ts
 // app/api/pulse/refresh-aggregates/route.ts
 import { createRefreshHandler, withPulseAuth } from "@pulsekit/next";
 import { createClient } from "@supabase/supabase-js";
 
-export const POST = withPulseAuth(() => {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-  return createRefreshHandler({ supabase })();
-});
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+const handler = withPulseAuth(createRefreshHandler({ supabase }));
+export const GET = handler;
+export const POST = handler;
 ```
 
 ```ts
@@ -160,13 +168,14 @@ export const POST = withPulseAuth(() => {
 import { createConsolidateHandler, withPulseAuth } from "@pulsekit/next";
 import { createClient } from "@supabase/supabase-js";
 
-export const POST = withPulseAuth(() => {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-  return createConsolidateHandler({ supabase })();
-});
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+const handler = withPulseAuth(createConsolidateHandler({ supabase }));
+export const GET = handler;
+export const POST = handler;
 ```
 
 ### 2. Add the tracker to your layout
@@ -298,7 +307,11 @@ Tokens are HMAC-SHA256 signed and expire after 24 hours by default (configurable
 
 ### Calling protected routes from cron jobs
 
-Routes wrapped with `withPulseAuth` accept an `Authorization` header as an alternative to cookies:
+Routes wrapped with `withPulseAuth` accept an `Authorization: Bearer` header as an alternative to cookies. The bearer token is checked against both `PULSE_SECRET` and `CRON_SECRET` environment variables.
+
+**Vercel Cron** sets `CRON_SECRET` automatically on each request — see [Scheduling](#scheduling) below.
+
+**External cron services** (cron-job.org, Upstash QStash, GitHub Actions, etc.) can use `PULSE_SECRET` directly:
 
 ```bash
 curl -X POST https://your-app.com/api/pulse/consolidate \
@@ -360,6 +373,46 @@ createConsolidateHandler({ supabase, retentionDays: 30 })
 ```
 
 The dashboard automatically queries both raw events and aggregates seamlessly, so data remains continuous even after old events are deleted.
+
+### Scheduling
+
+Both refresh and consolidate must run on a schedule — without this, the raw events table grows unbounded and aggregates are never populated.
+
+#### Vercel Cron (recommended)
+
+The `create-pulsekit` CLI scaffolds a `vercel.json` with two cron jobs:
+
+```json
+{
+  "crons": [
+    { "path": "/api/pulse/refresh-aggregates", "schedule": "0 */6 * * *" },
+    { "path": "/api/pulse/consolidate", "schedule": "0 3 * * *" }
+  ]
+}
+```
+
+This refreshes aggregates every 6 hours and runs consolidation/cleanup nightly at 3 AM UTC. Vercel Cron is available on all plans including the free Hobby plan.
+
+To enable it:
+
+1. Add a `CRON_SECRET` environment variable to your Vercel project (any random string)
+2. Deploy — Vercel reads `vercel.json` and starts the schedules automatically
+
+Vercel sends `CRON_SECRET` as an `Authorization: Bearer` header on each cron request, which `withPulseAuth` verifies automatically.
+
+#### Other platforms
+
+If you're not on Vercel, call the endpoints from any external scheduler with the `Authorization` header:
+
+```bash
+# Refresh aggregates (every 6 hours)
+curl https://your-app.com/api/pulse/refresh-aggregates \
+  -H "Authorization: Bearer $PULSE_SECRET"
+
+# Consolidate and cleanup (daily)
+curl https://your-app.com/api/pulse/consolidate \
+  -H "Authorization: Bearer $PULSE_SECRET"
+```
 
 ## Geolocation
 
@@ -484,7 +537,7 @@ Login is rate limited to 5 attempts per 60 seconds per IP.
 
 ### `withPulseAuth(handler)`
 
-Wraps a Next.js route handler with auth protection. Accepts either a valid `pulse_auth` cookie or `Authorization: Bearer <secret>` header. Reads `PULSE_SECRET` from `process.env`.
+Wraps a Next.js route handler with auth protection. Checks in order: `pulse_auth` cookie, `Authorization: Bearer` header against `PULSE_SECRET`, then against `CRON_SECRET`. Reads both from `process.env`.
 
 ### `createRefreshHandler({ supabase, daysBack? })`
 
@@ -541,10 +594,16 @@ React Server Component that renders the full analytics dashboard.
 | --- | --- | --- | --- |
 | `supabase` | `SupabaseClient` | — | Supabase client with service role key (required) |
 | `siteId` | `string` | — | Site ID to query (required) |
-| `timeframe` | `Timeframe` | `"7d"` | `"7d"`, `"30d"`, or `{ from: string; to: string }` (ISO dates) |
+| `timeframe` | `Timeframe` | `"7d"` | Traffic tab date range: `"7d"`, `"30d"`, or `{ from: string; to: string }` (ISO dates) |
+| `tab` | `string` | `"traffic"` | Active tab: `"traffic"`, `"vitals"`, `"errors"`, `"events"`, or `"system"` |
+| `range` | `"7d" \| "30d"` | `"7d"` | Timeframe for Vitals, Errors, and Events tabs (raw-event retention window) |
 | `timezone` | `string` | `"UTC"` | IANA timezone for date bucketing |
 | `refreshEndpoint` | `string` | `"/api/pulse/refresh-aggregates"` | Endpoint for the refresh button |
 | `onError` | `(error: unknown) => void` | — | Called on data query failure |
+| `eventType` | `string` | — | Events tab: filter by event type (`"pageview"`, `"error"`, etc.) |
+| `eventPath` | `string` | — | Events tab: filter by path |
+| `eventSession` | `string` | — | Events tab: filter by session ID |
+| `eventPage` | `number` | `0` | Events tab: page number for pagination (0-indexed) |
 
 ### `<PulseAuthGate />`
 
@@ -564,6 +623,7 @@ React Server Component that protects the dashboard with password auth.
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Yes | Public | Supabase anon/publishable key |
 | `SUPABASE_SERVICE_ROLE_KEY` | Yes | Server-only | Supabase service role key (for dashboard queries and admin routes) |
 | `PULSE_SECRET` | Yes | Server-only | Shared secret for auth and ingestion tokens (minimum 16 characters) |
+| `CRON_SECRET` | No | Server-only | Secret for Vercel Cron authentication (see [Scheduling](#scheduling)) |
 
 ## Compatibility
 

@@ -6,15 +6,17 @@ import React from "react";
 const mockGetPulseStats = vi.fn();
 const mockGetPulseVitals = vi.fn();
 const mockGetPulseErrors = vi.fn();
-const mockGetPulseAggregates = vi.fn();
 const mockGetPulseReferrers = vi.fn();
+const mockGetPulseEvents = vi.fn();
+const mockGetPulseSystemStats = vi.fn();
 
 vi.mock("@pulsekit/core", () => ({
   getPulseStats: (...args: unknown[]) => mockGetPulseStats(...args),
   getPulseVitals: (...args: unknown[]) => mockGetPulseVitals(...args),
   getPulseErrors: (...args: unknown[]) => mockGetPulseErrors(...args),
-  getPulseAggregates: (...args: unknown[]) => mockGetPulseAggregates(...args),
   getPulseReferrers: (...args: unknown[]) => mockGetPulseReferrers(...args),
+  getPulseEvents: (...args: unknown[]) => mockGetPulseEvents(...args),
+  getPulseSystemStats: (...args: unknown[]) => mockGetPulseSystemStats(...args),
   dateRangeFromTimeframe: () => ({ startDate: "2025-01-01", endDate: "2025-01-07" }),
 }));
 
@@ -23,11 +25,29 @@ vi.mock("../PulseChart", () => ({ PulseChart: () => null }));
 vi.mock("../PulseMap", () => ({ PulseMap: () => null }));
 vi.mock("../PulseVitals", () => ({ PulseVitals: () => null }));
 vi.mock("../PulseErrors", () => ({ PulseErrors: () => null }));
-vi.mock("../PulseAggregates", () => ({ PulseAggregates: () => null }));
 vi.mock("../PulseReferrers", () => ({ PulseReferrers: () => null }));
+vi.mock("../PulseEvents", () => ({
+  PulseEvents: () => React.createElement("div", { "data-testid": "events" }),
+}));
+vi.mock("../PulseSystem", () => ({
+  PulseSystem: ({ siteId }: { siteId: string }) =>
+    React.createElement("div", { "data-testid": "system", "data-site-id": siteId }),
+}));
 vi.mock("../RefreshButton", () => ({ RefreshButton: () => null }));
 vi.mock("../PulseIcon", () => ({ PulseIcon: () => null }));
 vi.mock("../PulseDateRangePicker", () => ({ PulseDateRangePicker: () => null }));
+vi.mock("../PulseTabs", () => ({
+  PulseTabs: ({ tabs, defaultTab }: { tabs: Array<{ id: string; label: string; content: React.ReactNode }>; defaultTab?: string }) =>
+    React.createElement("div", { "data-testid": "tabs", "data-default-tab": defaultTab },
+      tabs.map((tab) =>
+        React.createElement("div", { key: tab.id, "data-tab-id": tab.id, "data-tab-label": tab.label }, tab.content)
+      )
+    ),
+}));
+vi.mock("../PulseTimeToggle", () => ({
+  PulseTimeToggle: ({ value }: { value: string }) =>
+    React.createElement("div", { "data-testid": "time-toggle", "data-value": value }),
+}));
 
 // Keep Card and KpiRow real enough to inspect props
 vi.mock("../Card", () => ({
@@ -56,8 +76,9 @@ function emptyResults() {
   mockGetPulseErrors.mockResolvedValue({
     errors: [], totalErrorCount: 0, totalFrontendErrors: 0, totalServerErrors: 0,
   });
-  mockGetPulseAggregates.mockResolvedValue({ rows: [], totalRows: 0, totalViews: 0 });
   mockGetPulseReferrers.mockResolvedValue({ referrers: [], totalSources: 0 });
+  mockGetPulseEvents.mockResolvedValue({ events: [], totalCount: 0 });
+  mockGetPulseSystemStats.mockResolvedValue({ stats: [] });
 }
 
 function populatedResults() {
@@ -84,17 +105,25 @@ function populatedResults() {
     totalFrontendErrors: 5,
     totalServerErrors: 0,
   });
-  mockGetPulseAggregates.mockResolvedValue({
-    rows: [{ date: "2025-01-01", path: "/", totalViews: 100, uniqueVisitors: 50 }],
-    totalRows: 1,
-    totalViews: 100,
-  });
   mockGetPulseReferrers.mockResolvedValue({
     referrers: [
       { referrer: "(direct)", totalViews: 150, uniqueVisitors: 70 },
       { referrer: "google.com", totalViews: 100, uniqueVisitors: 50 },
     ],
     totalSources: 2,
+  });
+  mockGetPulseEvents.mockResolvedValue({
+    events: [
+      { id: 1, eventType: "pageview", path: "/", sessionId: "abc123", referrer: null, country: "US", city: "SF", meta: null, createdAt: "2025-01-02T12:00:00Z" },
+    ],
+    totalCount: 1,
+  });
+  mockGetPulseSystemStats.mockResolvedValue({
+    stats: [
+      { key: "total_events", value: "500" },
+      { key: "pageview_count", value: "300" },
+      { key: "aggregates_rows", value: "45" },
+    ],
   });
 }
 
@@ -137,6 +166,7 @@ function collectTree(node: unknown): string[] {
     if (!el.props && !el.type) return;
     if (el.props?.["data-title"]) tags.push(`card:${el.props["data-title"]}`);
     if (el.props?.["data-testid"]) tags.push(el.props["data-testid"]);
+    if (el.props?.["data-tab-id"]) tags.push(`tab:${el.props["data-tab-id"]}`);
     if (el.props?.children != null) {
       const children = el.props.children;
       if (Array.isArray(children)) { children.forEach(walk); } else { walk(children); }
@@ -185,20 +215,31 @@ beforeEach(() => {
 // ── Tests ────────────────────────────────────────────────────────────
 
 describe("PulseDashboard", () => {
+  it("renders all five tabs", async () => {
+    emptyResults();
+    const result = await PulseDashboard({ supabase: mockSupabase, siteId: "test" });
+    const tags = collectTree(result);
+
+    expect(tags).toContain("tabs");
+    expect(tags).toContain("tab:traffic");
+    expect(tags).toContain("tab:vitals");
+    expect(tags).toContain("tab:errors");
+    expect(tags).toContain("tab:events");
+    expect(tags).toContain("tab:system");
+  });
+
   it("renders traffic card even when no data", async () => {
     emptyResults();
     const result = await PulseDashboard({ supabase: mockSupabase, siteId: "test" });
     const tags = collectTree(result);
 
     expect(tags).toContain("card:Traffic over time");
-    // Should not show KPI, errors, map, or aggregates
+    // Should not show KPI or map when empty
     expect(tags).not.toContain("kpi");
-    expect(tags).not.toContain("card:Errors");
     expect(tags).not.toContain("card:Visitors by location");
-    expect(tags).not.toContain("card:Consolidated data");
   });
 
-  it("renders all sections when data is populated", async () => {
+  it("renders all traffic sections when data is populated", async () => {
     populatedResults();
     const result = await PulseDashboard({ supabase: mockSupabase, siteId: "test" });
     const tags = collectTree(result);
@@ -207,10 +248,15 @@ describe("PulseDashboard", () => {
     expect(tags).toContain("card:Traffic over time");
     expect(tags).toContain("card:Top pages");
     expect(tags).toContain("card:Traffic sources");
-    expect(tags).toContain("card:Web Vitals");
-    expect(tags).toContain("card:Errors");
     expect(tags).toContain("card:Visitors by location");
-    expect(tags).toContain("card:Consolidated data");
+  });
+
+  it("renders the events component in the events tab", async () => {
+    populatedResults();
+    const result = await PulseDashboard({ supabase: mockSupabase, siteId: "test" });
+    const tags = collectTree(result);
+
+    expect(tags).toContain("events");
   });
 
   it("computes KPI totals correctly", async () => {
@@ -224,20 +270,64 @@ describe("PulseDashboard", () => {
     expect(kpi!.props["data-avg"]).toBe(150);        // 300 / 2
   });
 
-  it("calls all five data functions with correct args", async () => {
+  it("calls data functions with correct args", async () => {
     emptyResults();
-    await PulseDashboard({ supabase: mockSupabase, siteId: "my-site", timeframe: "30d", timezone: "US/Pacific" });
+    await PulseDashboard({ supabase: mockSupabase, siteId: "my-site", timeframe: "30d", range: "7d", timezone: "US/Pacific" });
 
+    // Traffic uses the timeframe prop (date picker)
     expect(mockGetPulseStats).toHaveBeenCalledWith(
       expect.objectContaining({ siteId: "my-site", timeframe: "30d", timezone: "US/Pacific" }),
     );
-    expect(mockGetPulseVitals).toHaveBeenCalledWith(
-      expect.objectContaining({ siteId: "my-site", timeframe: "30d", timezone: "US/Pacific" }),
-    );
-    expect(mockGetPulseErrors).toHaveBeenCalledOnce();
-    expect(mockGetPulseAggregates).toHaveBeenCalledOnce();
+    // Referrers also use the traffic timeframe
     expect(mockGetPulseReferrers).toHaveBeenCalledWith(
       expect.objectContaining({ siteId: "my-site", timeframe: "30d", timezone: "US/Pacific" }),
+    );
+    // Vitals, Errors, and Events use the range prop (time toggle)
+    expect(mockGetPulseVitals).toHaveBeenCalledWith(
+      expect.objectContaining({ siteId: "my-site", timeframe: "7d", timezone: "US/Pacific" }),
+    );
+    expect(mockGetPulseErrors).toHaveBeenCalledWith(
+      expect.objectContaining({ siteId: "my-site", timeframe: "7d", timezone: "US/Pacific" }),
+    );
+    expect(mockGetPulseEvents).toHaveBeenCalledWith(
+      expect.objectContaining({ siteId: "my-site", timeframe: "7d", timezone: "US/Pacific" }),
+    );
+  });
+
+  it("passes event filter props to getPulseEvents", async () => {
+    emptyResults();
+    await PulseDashboard({
+      supabase: mockSupabase,
+      siteId: "test",
+      eventType: "pageview",
+      eventPath: "/about",
+      eventSession: "abc123",
+      eventPage: 2,
+    });
+
+    expect(mockGetPulseEvents).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType: "pageview",
+        path: "/about",
+        sessionId: "abc123",
+        offset: 100,   // page 2 * 50
+      }),
+    );
+  });
+
+  it("passes range to vitals/errors/events as their timeframe", async () => {
+    emptyResults();
+    await PulseDashboard({ supabase: mockSupabase, siteId: "test", timeframe: { from: "2025-01-01", to: "2025-06-01" }, range: "30d" });
+
+    // Vitals/errors/events should get "30d", not the custom date range
+    expect(mockGetPulseVitals).toHaveBeenCalledWith(
+      expect.objectContaining({ timeframe: "30d" }),
+    );
+    expect(mockGetPulseErrors).toHaveBeenCalledWith(
+      expect.objectContaining({ timeframe: "30d" }),
+    );
+    expect(mockGetPulseEvents).toHaveBeenCalledWith(
+      expect.objectContaining({ timeframe: "30d" }),
     );
   });
 
@@ -245,8 +335,9 @@ describe("PulseDashboard", () => {
     mockGetPulseStats.mockRejectedValue(new Error("DB error"));
     mockGetPulseVitals.mockRejectedValue(new Error("DB error"));
     mockGetPulseErrors.mockRejectedValue(new Error("DB error"));
-    mockGetPulseAggregates.mockRejectedValue(new Error("DB error"));
     mockGetPulseReferrers.mockRejectedValue(new Error("DB error"));
+    mockGetPulseEvents.mockRejectedValue(new Error("DB error"));
+    mockGetPulseSystemStats.mockRejectedValue(new Error("DB error"));
 
     // Should not throw — each fetch has a .catch fallback
     const result = await PulseDashboard({ supabase: mockSupabase, siteId: "test" });
@@ -258,16 +349,35 @@ describe("PulseDashboard", () => {
     mockGetPulseStats.mockRejectedValue(new Error("stats fail"));
     mockGetPulseVitals.mockRejectedValue(new Error("vitals fail"));
     mockGetPulseErrors.mockRejectedValue(new Error("errors fail"));
-    mockGetPulseAggregates.mockRejectedValue(new Error("aggregates fail"));
     mockGetPulseReferrers.mockRejectedValue(new Error("referrers fail"));
+    mockGetPulseEvents.mockRejectedValue(new Error("events fail"));
+    mockGetPulseSystemStats.mockRejectedValue(new Error("system fail"));
 
     await PulseDashboard({ supabase: mockSupabase, siteId: "test", onError });
 
-    expect(onError).toHaveBeenCalledTimes(5);
+    expect(onError).toHaveBeenCalledTimes(6);
     expect(onError).toHaveBeenCalledWith(expect.objectContaining({ message: "stats fail" }));
     expect(onError).toHaveBeenCalledWith(expect.objectContaining({ message: "vitals fail" }));
     expect(onError).toHaveBeenCalledWith(expect.objectContaining({ message: "errors fail" }));
-    expect(onError).toHaveBeenCalledWith(expect.objectContaining({ message: "aggregates fail" }));
     expect(onError).toHaveBeenCalledWith(expect.objectContaining({ message: "referrers fail" }));
+    expect(onError).toHaveBeenCalledWith(expect.objectContaining({ message: "events fail" }));
+    expect(onError).toHaveBeenCalledWith(expect.objectContaining({ message: "system fail" }));
+  });
+
+  it("renders the system component in the system tab", async () => {
+    populatedResults();
+    const result = await PulseDashboard({ supabase: mockSupabase, siteId: "test" });
+    const tags = collectTree(result);
+
+    expect(tags).toContain("system");
+  });
+
+  it("calls getPulseSystemStats with correct args", async () => {
+    emptyResults();
+    await PulseDashboard({ supabase: mockSupabase, siteId: "my-site" });
+
+    expect(mockGetPulseSystemStats).toHaveBeenCalledWith(
+      expect.objectContaining({ siteId: "my-site" }),
+    );
   });
 });
