@@ -15,23 +15,19 @@ export interface PulseTabsProps {
   headerLeft?: React.ReactNode;
 }
 
-function getTabFromUrl(defaultTab: string): string {
-  if (typeof window === "undefined") return defaultTab;
-  const params = new URLSearchParams(window.location.search);
-  return params.get("tab") || defaultTab;
-}
-
 export function PulseTabs({ tabs, defaultTab, headerLeft }: PulseTabsProps) {
   const fallback = defaultTab || tabs[0]?.id || "traffic";
-  const [activeTab, setActiveTab] = useState(() => getTabFromUrl(fallback));
+  const [activeTab, setActiveTab] = useState(fallback);
 
-  // Sync with URL on popstate (browser back/forward)
+  // Sync with URL on mount and on popstate (browser back/forward)
   useEffect(() => {
-    function onPopState() {
-      setActiveTab(getTabFromUrl(fallback));
+    function syncTab() {
+      const params = new URLSearchParams(window.location.search);
+      setActiveTab(params.get("tab") || fallback);
     }
-    window.addEventListener("popstate", onPopState);
-    return () => window.removeEventListener("popstate", onPopState);
+    syncTab();
+    window.addEventListener("popstate", syncTab);
+    return () => window.removeEventListener("popstate", syncTab);
   }, [fallback]);
 
   function handleTabClick(tabId: string) {

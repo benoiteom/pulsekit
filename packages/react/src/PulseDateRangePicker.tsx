@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { DayPicker } from "react-day-picker";
 import "react-day-picker/style.css";
 
@@ -52,7 +52,7 @@ export function PulseDateRangePicker({ from, to }: PulseDateRangePickerProps) {
     return () => document.removeEventListener("mousedown", handle);
   }, [open, from, to]);
 
-  const today = new Date();
+  const today = useMemo(() => new Date(), []);
 
   function handleDayClick(day: Date) {
     if (activeField === "start") {

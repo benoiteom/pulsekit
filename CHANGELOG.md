@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-03-31
+
+### Fixed
+
+- **@pulsekit/react**: Fix React hydration mismatch error (#418) in `PulseTabs` — tab state was initialized from `window.location.search` during SSR, causing server/client divergence when a `?tab=` param is present. Now initializes with the default tab and syncs from the URL in a `useEffect`.
+- **@pulsekit/react**: Fix hydration mismatch in `PulseErrors` — `Date.now()` was called during render for relative timestamps ("5m ago"), producing different values on server vs client. Now deferred to a client-side effect.
+- **@pulsekit/react**: Fix hydration mismatch in `PulseEvents` — local-timezone date formatting (`getHours()`, etc.) could differ between server and client. Now uses UTC for SSR and local time after hydration.
+
 ## [1.2.0] - 2026-03-31
 
 ### Added
