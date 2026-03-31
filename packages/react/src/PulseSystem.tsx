@@ -25,16 +25,6 @@ function formatDate(iso: string): string {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
-function formatDateTime(iso: string): string {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleString("en-US", {
-    month: "short", day: "numeric", year: "numeric",
-    hour: "2-digit", minute: "2-digit",
-  });
-}
-
 function Chip({ label, value, color }: { label: string; value: string; color?: string }) {
   return (
     <div className="pulse-chip" style={{ backgroundColor: "var(--pulse-kpi-bg)" }}>
